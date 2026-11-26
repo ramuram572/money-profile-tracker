@@ -15,7 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="styles.css?v=2026-11-26.30" />
+<link rel="stylesheet" href="styles.css?v=2026-11-26.31" />
 </head>
 <body>
 <!-- WELCOME / ONBOARDING -->
@@ -93,7 +93,7 @@
 <!-- WHY THIS APP -->
 <div class="welcome-overlay" id="whyOverlay" hidden>
   <div class="welcome-card" style="max-width:560px;text-align:left">
-    <h2>Why Money Profile? <button class="btn ghost small" data-close-modal="whyOverlay" type="button" style="float:right">✕</button></h2>
+    <h2>Why Money Profile? <button class="btn ghost small" data-close-modal="whyOverlay" type="button">✕</button></h2>
     <div id="whyCountdownBar" style="background:#dcfce7;border:2px solid #16a34a;border-radius:12px;padding:10px;text-align:center;font-weight:800;color:#14532d;font-size:18px">⏳ Closing in 5 secs…</div><div style="height:8px;background:#e2e8f0;border-radius:4px;margin-top:6px;overflow:hidden"><div id="whyProgress" style="height:100%;width:100%;background:#16a34a"></div></div><p class="muted small" id="whyCountdown" hidden>⏳ Closing in 5 secs…</p>
     <p>✅ <strong>One entry a month.</strong> No daily tracking, no burnout — enter once after payday.</p>
     <p>💬 <strong>Plain English, not spreadsheets.</strong> "You kept $1,200 — your best yet" plus a tip.</p>
@@ -107,7 +107,7 @@
 </div>
 <div class="welcome-overlay" id="householdOverlay" hidden>
   <div class="welcome-card" style="max-width:560px;text-align:left">
-    <h2>Household total <button class="btn ghost small" data-close-modal="householdOverlay" type="button" style="float:right">✕</button></h2>
+    <h2>Household total <button class="btn ghost small" data-close-modal="householdOverlay" type="button">✕</button></h2>
     <p class="muted">All profiles together — latest month each.</p>
     <div id="householdBody"></div>
     <button class="btn ghost" id="householdClose" type="button" style="margin-top:8px">Close</button>
@@ -115,7 +115,7 @@
 </div>
 <div class="welcome-overlay" id="yearOverlay" hidden>
   <div class="welcome-card" style="max-width:560px;text-align:left">
-    <h2>My year in review <button class="btn ghost small" data-close-modal="yearOverlay" type="button" style="float:right">✕</button></h2>
+    <h2>My year in review <button class="btn ghost small" data-close-modal="yearOverlay" type="button">✕</button></h2>
     <div id="yearBody"></div>
     <button class="btn primary" id="yearShareBtn" type="button">💚 Share my year</button>
     <button class="btn ghost" id="yearClose" type="button" style="margin-top:8px">Close</button>
@@ -399,6 +399,6 @@
 
   <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
-<script src="app.js?v=2026-11-26.30"></script>
+<script src="app.js?v=2026-11-26.31"></script>
 </body>
 </html>
