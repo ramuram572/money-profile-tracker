@@ -11,7 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="styles.css?v=2026-11-26.7" />
+<link rel="stylesheet" href="styles.css?v=2026-11-26.8" />
 </head>
 <body>
 <!-- WELCOME / ONBOARDING -->
@@ -75,7 +75,15 @@
 
 <main class="wrap">
   <!-- PROFILE -->
-  <section class="card profile-card">
+  <section class="card profile-card" data-section="profile">
+    <button class="collapse-btn" data-collapse="profile" type="button" title="Minimise / expand profile">−</button>
+    <div id="profileSummary" class="profile-summary" hidden>
+      <span class="avatar" id="summaryAvatar">?</span>
+      <strong id="summaryName">—</strong>
+      <span class="pill" id="summaryMonths">0 mo</span>
+      <span id="summaryNetWorth" class="green-text"></span>
+      <span id="summarySurplus"></span>
+    </div>
     <div class="profile-left">
       <div class="avatar" id="avatarInitial">?</div>
       <div>
@@ -107,7 +115,8 @@
   </section>
 
   <!-- DRIVE SYNC -->
-  <section class="card drive-card" id="driveCard">
+  <section class="card drive-card" id="driveCard" data-section="drive">
+    <button class="collapse-btn" data-collapse="drive" type="button" title="Minimise / expand Drive">−</button>
     <div id="driveCollapsedBar" class="drive-collapsed" hidden>
       <span>● Connected to Google Drive ✓</span>
       <span class="muted small" id="driveCollapsedLast"></span>
@@ -132,7 +141,8 @@
   </section>
 
   <!-- VERDICT -->
-  <section id="verdict" class="verdict neutral">
+  <section id="verdict" class="verdict neutral" data-section="verdict">
+    <button class="collapse-btn" data-collapse="verdict" type="button" title="Minimise / expand verdict">−</button>
     <div class="verdict-icon" id="verdictIcon">●</div>
     <div>
       <h2 id="verdictTitle">Add your first month to see your verdict</h2>
@@ -145,14 +155,14 @@
 
   <!-- INSIGHTS + STREAK + BADGES -->
   <section class="two-col">
-    <div class="card">
-      <div class="card-head"><div><h3>💡 This month, in plain English</h3><p id="insightSub">Your smart summary</p></div><span class="pill" id="streakPill">—</span></div>
+    <div class="card" data-section="insights">
+      <div class="card-head"><div><h3>💡 This month, in plain English</h3><p id="insightSub">Your smart summary</p></div><span class="pill" id="streakPill">—</span><button class="collapse-btn" data-collapse="insights" type="button" title="Minimise / expand insights">−</button></div>
       <p id="insightText" class="insight-text">Add a month to see your insight.</p>
       <p id="insightTip" class="muted"></p>
       <div id="badgeRow" class="badge-row"></div>
     </div>
-    <div class="card">
-      <div class="card-head"><div><h3>🎯 Savings goals</h3><p>What are you saving for?</p></div></div>
+    <div class="card" data-section="goals">
+      <div class="card-head"><div><h3>🎯 Savings goals</h3><p>What are you saving for?</p></div><button class="collapse-btn" data-collapse="goals" type="button" title="Minimise / expand goals">−</button></div>
       <div id="goalList" class="goal-list"></div>
       <form id="goalForm" class="goal-form">
         <input id="goalName" placeholder="e.g. Vacation" maxlength="30" required>
@@ -166,7 +176,8 @@
   </section>
 
   <!-- SHARE + REPORT -->
-  <section class="card share-card">
+  <section class="card share-card" data-section="share">
+    <button class="collapse-btn" data-collapse="share" type="button" title="Minimise / expand share">−</button>
     <div><h3>📣 Share your win</h3><p class="muted">Made a green month? Share it, or save a PDF report.</p></div>
     <div class="drive-actions">
       <button class="btn primary" id="shareBtn" type="button">💚 Share my month — image</button>
@@ -186,21 +197,21 @@
 
   <!-- CHARTS -->
   <section class="charts">
-    <div class="card chart-card wide">
+    <div class="card chart-card wide" data-section="chart-income">
       <div class="card-head"><div><h3>Income vs Spending</h3><p>Green bar = surplus month &nbsp;•&nbsp; Red bar = deficit month</p></div><span class="pill" id="trendPill">—</span></div>
       <div class="chart-box"><canvas id="incomeChart"></canvas></div>
       <div class="legend"><span><i class="dot green"></i> Income</span><span><i class="dot red"></i> Spending</span><span><i class="dot line"></i> Surplus</span></div>
     </div>
-    <div class="card chart-card">
+    <div class="card chart-card" data-section="chart-networth">
       <div class="card-head"><div><h3>Net Worth</h3><p>Green up, red down vs last month</p></div></div>
       <div class="chart-box"><canvas id="netWorthChart"></canvas></div>
       <div class="networth-note" id="netWorthNote">—</div>
     </div>
-    <div class="card chart-card">
+    <div class="card chart-card" data-section="chart-breakdown">
       <div class="card-head"><div><h3>Where it went</h3><p id="breakdownLabel">Latest month</p></div></div>
       <div class="chart-box"><canvas id="breakdownChart"></canvas></div>
     </div>
-    <div class="card chart-card wide">
+    <div class="card chart-card wide" data-section="chart-savings">
       <div class="card-head"><div><h3>Savings Rate</h3><p>Surplus ÷ Income — green at or above your goal</p></div></div>
       <div class="chart-box short"><canvas id="savingsChart"></canvas></div>
     </div>
@@ -208,7 +219,7 @@
 
   <!-- FORM + HISTORY -->
   <section class="two-col">
-    <div class="card form-card" id="formCard">
+    <div class="card form-card" id="formCard" data-section="form">
       <h3>✎ Monthly entry — once a month</h3>
       <p class="muted">Pick a month, fill the numbers, save. If the month already exists, saving updates it.</p>
       <form id="monthForm">
@@ -241,8 +252,8 @@
       </form>
     </div>
 
-    <div class="card history-card">
-      <div class="card-head"><div><h3>History</h3><p>Every month, one row — green or red at a glance</p></div><button class="btn ghost small" id="clearAllBtn" type="button">Clear all</button></div>
+    <div class="card history-card" data-section="history">
+      <div class="card-head"><div><h3>History</h3><p>Every month, one row — green or red at a glance</p></div><button class="btn ghost small" id="clearAllBtn" type="button">Clear all</button><button class="collapse-btn" data-collapse="history" type="button" title="Minimise / expand history">−</button></div>
       <div class="table-wrap"><table>
         <thead><tr><th>Month</th><th>Income</th><th>Spent</th><th>Surplus</th><th>Net worth</th><th></th></tr></thead>
         <tbody id="historyBody"><tr><td colspan="6" class="empty">No months yet — add your first one.</td></tr></tbody>
@@ -253,6 +264,6 @@
 
   <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
-<script src="app.js?v=2026-11-26.7"></script>
+<script src="app.js?v=2026-11-26.8"></script>
 </body>
 </html>

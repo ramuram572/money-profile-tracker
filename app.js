@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.7';
+const APP_VERSION = '2026-11-26.8';
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
 const EXPENSE_KEYS = [['housing','Housing'],['food','Food'],['transport','Transport'],['subs','Subscriptions'],['shopping','Shopping'],['fun','Fun / Eating out'],['health','Health'],['other','Other']];
@@ -14,14 +14,14 @@ function load(){
   try{
     const d = JSON.parse(localStorage.getItem(KEY));
     if(d && Array.isArray(d.profiles)){
-      d.profiles.forEach((p,i)=>{ if(!p.id) p.id='p'+(i+1); if(!Array.isArray(p.entries)) p.entries=[]; if(!p.currency) p.currency='USD'; if(p.goal==null) p.goal=20; if(!Array.isArray(p.goals)) p.goals=[]; if(!p.budgets) p.budgets={}; });
+      d.profiles.forEach((p,i)=>{ if(!p.id) p.id='p'+(i+1); if(!Array.isArray(p.entries)) p.entries=[]; if(!p.currency) p.currency='USD'; if(p.goal==null) p.goal=20; if(!Array.isArray(p.goals)) p.goals=[]; if(!p.budgets) p.budgets={}; if(!p.uiCollapsed) p.uiCollapsed={}; });
       if(!d.currentProfileId || !d.profiles.find(p=>p.id===d.currentProfileId)) d.currentProfileId = d.profiles[0] ? d.profiles[0].id : null;
       return d;
     }
     // Legacy single-profile format (profile + entries) → migrate to profiles
     if(d && Array.isArray(d.entries)){
       const p = d.profile || {name:'',currency:'USD',goal:20};
-      const prof = { id:'p1', name:p.name||'', currency:p.currency||'USD', goal:p.goal||20, entries:d.entries, goals:[], budgets:{} };
+      const prof = { id:'p1', name:p.name||'', currency:p.currency||'USD', goal:p.goal||20, entries:d.entries, goals:[], budgets:{}, uiCollapsed:{} };
       return { profiles:[prof], currentProfileId:'p1' };
     }
   }catch(e){}
@@ -84,6 +84,42 @@ function renderBudgets(){
   $('budgetList').querySelectorAll('[data-budget]').forEach(inp=>inp.addEventListener('change', e=>{ const v=parseFloat(e.target.value)||0; if(v) p.budgets[e.target.dataset.budget]=v; else delete p.budgets[e.target.dataset.budget]; save(); render(); }));
 }
 
+// + / − collapse — saved per profile, so it comes back the same next login.
+// uiCollapsed lives on the profile, so it is saved in localStorage AND in
+// money-profile.json on Drive sync.
+function applyCollapse(){
+  const p=prof(); const collapsed = p ? (p.uiCollapsed||{}) : {};
+  document.querySelectorAll('[data-section]').forEach(sec=>{
+    const name=sec.dataset.section; const isCollapsed=!!collapsed[name];
+    sec.classList.toggle('collapsed', isCollapsed);
+    const btn=sec.querySelector('[data-collapse]');
+    if(btn) btn.textContent = isCollapsed ? '+' : '−';
+  });
+  // Drive: collapsed = green bar, expanded = full box (unless not connected)
+  const driveCollapsed = !!collapsed.drive;
+  if(driveToken){ $('driveCard').classList.toggle('connected-collapsed', driveCollapsed); $('driveCollapsedBar').hidden = !driveCollapsed; }
+  // Profile minimised: only name + minimal data, in colour
+  const sum=$('profileSummary');
+  if(p && collapsed.profile){
+    sum.hidden=false;
+    $('summaryAvatar').textContent = p.name ? p.name[0].toUpperCase() : '?';
+    $('summaryName').textContent = p.name || 'Unnamed profile';
+    $('summaryMonths').textContent = p.entries.length + ' mo';
+    const entries=sorted(); const last=entries[entries.length-1];
+    $('summaryNetWorth').textContent = last ? 'Net worth ' + money(netWorth(last)) : '';
+    $('summarySurplus').textContent = last ? (surplus(last)>=0?'🟢 +':'🔴 −') + money(Math.abs(surplus(last))) : '';
+    $('summarySurplus').className = last ? (surplus(last)>=0?'green-text':'red-text') : '';
+  } else sum.hidden=true;
+}
+document.addEventListener('click', e=>{
+  const btn=e.target.closest('[data-collapse]'); if(!btn) return;
+  const p=prof(); if(!p) return;
+  if(!p.uiCollapsed) p.uiCollapsed={};
+  const name=btn.dataset.collapse;
+  p.uiCollapsed[name]=!p.uiCollapsed[name];
+  save(); applyCollapse();
+});
+
 function render(){
   const p = prof();
   const entries = sorted();
@@ -101,7 +137,7 @@ function render(){
   $('avatarInitial').textContent = p && p.name ? p.name[0].toUpperCase() : '?';
   $('currency').value = p ? p.currency : 'USD';
   $('savingsGoal').value = p ? p.goal : 20;
-  renderInsights(entries); renderGoals(); renderBudgets();
+  renderInsights(entries); renderGoals(); renderBudgets(); applyCollapse();
   // Payday reminder: first week of the month, no entry yet for this month
   const now=new Date(); const curMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const hasCur=entries.some(e=>e.month===curMonth);
@@ -279,6 +315,8 @@ function driveSetConnected(connected){
   $('driveConnectBtn').textContent = connected ? '● Connected' : 'Connect Drive';
   $('driveStatus').className = connected ? 'muted green-text' : 'muted';
   // Connected = green bar, box collapsed. Expand to see details again.
+  // Save that collapsed state, so it comes back the same next login.
+  const pr=prof(); if(pr){ if(!pr.uiCollapsed) pr.uiCollapsed={}; if(connected) pr.uiCollapsed.drive=true; save(); }
   $('driveCard').classList.toggle('connected-collapsed', connected);
   $('driveCollapsedBar').hidden = !connected;
   const last = localStorage.getItem('moneyProfileDriveLastSync');
@@ -477,6 +515,15 @@ $('shareBtn').onclick=async ()=>{
 };
 // PDF report — print view, save as PDF from the print dialog
 $('pdfBtn').onclick=()=>window.print();
+
+// Inject a + / − button into any box that doesn't have one yet (chart cards)
+document.querySelectorAll('[data-section]').forEach(sec=>{
+  if(sec.querySelector('[data-collapse]')) return;
+  const b=document.createElement('button'); b.className='collapse-btn'; b.type='button'; b.dataset.collapse=sec.dataset.section; b.title='Minimise / expand'; b.textContent='−';
+  sec.appendChild(b);
+});
+// Drive + / − : + expands, − minimises (same saved state as every other box)
+$('driveExpandBtn').onclick=()=>{ const p=prof(); if(p){ if(!p.uiCollapsed) p.uiCollapsed={}; p.uiCollapsed.drive=false; save(); applyCollapse(); } };
 
 // Default month = current month
 (()=>{ const d=new Date(); $('fMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render(); updateLive(); })();
