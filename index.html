@@ -11,7 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="styles.css?v=2026-11-26.8" />
+<link rel="stylesheet" href="styles.css?v=2026-11-26.9" />
 </head>
 <body>
 <!-- WELCOME / ONBOARDING -->
@@ -118,12 +118,12 @@
   <section class="card drive-card" id="driveCard" data-section="drive">
     <button class="collapse-btn" data-collapse="drive" type="button" title="Minimise / expand Drive">−</button>
     <div id="driveCollapsedBar" class="drive-collapsed" hidden>
-      <span>● Connected to Google Drive ✓</span>
+      <span id="driveCollapsedTitle">● Connected to Google Drive ✓</span>
       <span class="muted small" id="driveCollapsedLast"></span>
       <button class="btn ghost small" id="driveExpandBtn" type="button" title="Expand — show Drive details">＋</button>
       <button class="btn ghost small" id="driveCollapsedDisconnect" type="button">Disconnect</button>
     </div>
-    <div>
+    <div class="drive-left">
       <h3>☁ Google Drive sync — use on any device</h3>
       <p class="muted" id="driveStatus">Not connected. Your data is only in this browser until you sync it to Drive.</p>
       <p class="muted small">One file in your Drive: <code>money-profile.json</code> — private, only the app can read it (drive.file scope). First time: paste your Google OAuth Client ID below, then Connect. See README for the 5-minute setup.</p>
@@ -144,7 +144,7 @@
   <section id="verdict" class="verdict neutral" data-section="verdict">
     <button class="collapse-btn" data-collapse="verdict" type="button" title="Minimise / expand verdict">−</button>
     <div class="verdict-icon" id="verdictIcon">●</div>
-    <div>
+    <div class="verdict-body">
       <h2 id="verdictTitle">Add your first month to see your verdict</h2>
       <p id="verdictText">Enter income, spending, savings and net worth once a month. Green means you're ahead. Red means spending beat income, or net worth fell.</p>
     </div>
@@ -264,6 +264,6 @@
 
   <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
-<script src="app.js?v=2026-11-26.8"></script>
+<script src="app.js?v=2026-11-26.9"></script>
 </body>
 </html>

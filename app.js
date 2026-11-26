@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.8';
+const APP_VERSION = '2026-11-26.9';
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
 const EXPENSE_KEYS = [['housing','Housing'],['food','Food'],['transport','Transport'],['subs','Subscriptions'],['shopping','Shopping'],['fun','Fun / Eating out'],['health','Health'],['other','Other']];
@@ -95,9 +95,16 @@ function applyCollapse(){
     const btn=sec.querySelector('[data-collapse]');
     if(btn) btn.textContent = isCollapsed ? '+' : '−';
   });
-  // Drive: collapsed = green bar, expanded = full box (unless not connected)
+  // Drive: collapsed = green bar (or a grey "not connected" bar), expanded = full box.
+  // Always show *something* when minimised — never a blank box.
   const driveCollapsed = !!collapsed.drive;
-  if(driveToken){ $('driveCard').classList.toggle('connected-collapsed', driveCollapsed); $('driveCollapsedBar').hidden = !driveCollapsed; }
+  $('driveCollapsedBar').hidden = !driveCollapsed;
+  if(driveCollapsed){
+    if(driveToken){ $('driveCollapsedTitle').textContent='● Connected to Google Drive ✓'; $('driveCollapsedBar').style.background='linear-gradient(90deg,#16a34a,#22c55e)'; $('driveCollapsedDisconnect').style.display=''; }
+    else { $('driveCollapsedTitle').textContent='○ Google Drive — not connected'; $('driveCollapsedBar').style.background='linear-gradient(90deg,#475569,#64748b)'; $('driveCollapsedDisconnect').style.display='none'; }
+    const last = localStorage.getItem('moneyProfileDriveLastSync');
+    $('driveCollapsedLast').textContent = driveToken ? (last ? 'Last synced: ' + last : 'Not synced yet — tap + then Sync now') : 'Tap + to connect';
+  }
   // Profile minimised: only name + minimal data, in colour
   const sum=$('profileSummary');
   if(p && collapsed.profile){
@@ -206,7 +213,9 @@ function render(){
 
 function drawCharts(entries){
   if(typeof Chart==='undefined') return;
-  Chart.defaults.color='#94a3b8'; Chart.defaults.font.family='Inter';
+  const light = document.documentElement.getAttribute('data-theme')==='light';
+  Chart.defaults.color = light ? '#475569' : '#94a3b8'; Chart.defaults.font.family='Inter';
+  const grid = light ? '#e2e8f0' : '#22304d', doughnutBorder = light ? '#ffffff' : '#111a2e', lineCol = light ? '#0f172a' : '#fff';
   const labels = entries.map(e=>monthLabel(e.month));
   const incomes = entries.map(e=>e.income), spends = entries.map(e=>totalSpend(e));
   const surpluses = entries.map(e=>surplus(e)), nws = entries.map(e=>netWorth(e)), rates = entries.map(e=>rate(e));
@@ -215,12 +224,12 @@ function drawCharts(entries){
     mk('incomeChart',{type:'bar',data:{labels,datasets:[
       {label:'Income',data:incomes,backgroundColor:'#22c55e',borderRadius:6},
       {label:'Spending',data:spends,backgroundColor:entries.map(e=>surplus(e)>=0?'#f97316':'#ef4444'),borderRadius:6},
-      {label:'Surplus',type:'line',data:surpluses,borderColor:'#fff',backgroundColor:'#fff',pointBackgroundColor:surpluses.map(v=>v>=0?'#22c55e':'#ef4444'),pointRadius:5,tension:.3}
-    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#22304d'}},x:{grid:{display:false}}}}});
-    mk('netWorthChart',{type:'line',data:{labels,datasets:[{label:'Net worth',data:nws,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.15)',fill:true,pointBackgroundColor:nws.map((v,i)=>i===0||v>=nws[i-1]?'#22c55e':'#ef4444'),pointRadius:6,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#22304d'}},x:{grid:{display:false}}}}});
+      {label:'Surplus',type:'line',data:surpluses,borderColor:lineCol,backgroundColor:lineCol,pointBackgroundColor:surpluses.map(v=>v>=0?'#22c55e':'#ef4444'),pointRadius:5,tension:.3}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:grid}},x:{grid:{display:false}}}}});
+    mk('netWorthChart',{type:'line',data:{labels,datasets:[{label:'Net worth',data:nws,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.15)',fill:true,pointBackgroundColor:nws.map((v,i)=>i===0||v>=nws[i-1]?'#22c55e':'#ef4444'),pointRadius:6,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:grid}},x:{grid:{display:false}}}}});
     const last=entries[entries.length-1];
-    mk('breakdownChart',{type:'doughnut',data:{labels:EXPENSE_KEYS.map(([,l])=>l),datasets:[{data:EXPENSE_KEYS.map(([k])=>last.expenses[k]||0),backgroundColor:['#6366f1','#22c55e','#f59e0b','#ef4444','#ec4899','#14b8a6','#a78bfa','#94a3b8'],borderWidth:2,borderColor:'#111a2e'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}}}}});
-    mk('savingsChart',{type:'bar',data:{labels,datasets:[{label:'Savings rate %',data:rates,backgroundColor:rates.map(v=>v>=(prof()?prof().goal:20)?'#22c55e':'#ef4444'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#22304d'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}});
+    mk('breakdownChart',{type:'doughnut',data:{labels:EXPENSE_KEYS.map(([,l])=>l),datasets:[{data:EXPENSE_KEYS.map(([k])=>last.expenses[k]||0),backgroundColor:['#6366f1','#22c55e','#f59e0b','#ef4444','#ec4899','#14b8a6','#a78bfa','#94a3b8'],borderWidth:2,borderColor:doughnutBorder}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}}}}});
+    mk('savingsChart',{type:'bar',data:{labels,datasets:[{label:'Savings rate %',data:rates,backgroundColor:rates.map(v=>v>=(prof()?prof().goal:20)?'#22c55e':'#ef4444'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:grid},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}});
   }
 }
 
@@ -491,7 +500,7 @@ setTimeout(async ()=>{
 $('goalForm').addEventListener('submit', e=>{ e.preventDefault(); const pr=prof(); if(!pr) return; const name=$('goalName').value.trim(); const target=parseFloat($('goalTarget').value)||0; if(!name||!target) return; pr.goals.push({id:'g'+Date.now(), name, target, saved:0}); save(); render(); e.target.reset(); });
 // Theme — light / dark, remembered in this browser
 function applyTheme(t){ document.documentElement.setAttribute('data-theme', t); localStorage.setItem('moneyProfileTheme', t); $('themeBtn').textContent = t==='light' ? '🌙 Dark' : '☀️ Light'; }
-$('themeBtn').onclick=()=>{ applyTheme(document.documentElement.getAttribute('data-theme')==='light' ? 'dark' : 'light'); };
+$('themeBtn').onclick=()=>{ applyTheme(document.documentElement.getAttribute('data-theme')==='light' ? 'dark' : 'light'); render(); };
 applyTheme(localStorage.getItem('moneyProfileTheme') || 'dark');
 // Payday banner
 $('paydayAddBtn').onclick=()=>{ $('formCard').scrollIntoView({behavior:'smooth'}); $('fIncome').focus(); };
