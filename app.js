@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.27';
+const APP_VERSION = '2026-11-26.28';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -480,11 +480,11 @@ let whyPageTimer=null;
 function showWhyPage(){
   $('welcomeOverlay').hidden=true; $('profilePickerOverlay').hidden=true;
   $('whyPageOverlay').hidden=false;
-  clearInterval(whyPageTimer); let n=10;
+  clearInterval(whyPageTimer); let n=5;
   const bar=$('whyPageCountdownBar'), prog=$('whyPageProgress');
-  if(bar) bar.textContent='⏳ Going to your money page in 10 secs…';
+  if(bar) bar.textContent='⏳ Going to your money page in 5 secs…';
   if(prog) prog.style.width='100%';
-  whyPageTimer=setInterval(()=>{ n--; if(bar) bar.textContent = n>0 ? `⏳ Going to your money page in ${n} sec${n===1?'':'s'}…` : 'Going to your money page…'; if(prog) prog.style.width=Math.max(0,n/10*100)+'%'; if(n<=0){ clearInterval(whyPageTimer); goToMainPage(); } }, 1000);
+  whyPageTimer=setInterval(()=>{ n--; if(bar) bar.textContent = n>0 ? `⏳ Going to your money page in ${n} sec${n===1?'':'s'}…` : 'Going to your money page…'; if(prog) prog.style.width=Math.max(0,n/5*100)+'%'; if(n<=0){ clearInterval(whyPageTimer); goToMainPage(); } }, 1000);
 }
 function applyHandedness(hand){
   document.documentElement.classList.toggle('left-handed', hand==='left');
@@ -648,10 +648,10 @@ document.querySelectorAll('[data-close-modal]').forEach(b=>b.onclick=()=>{ $(b.d
 // Why / Household / Year in review
 let whyTimer=null;
 function whyStartCountdown(){
-  clearInterval(whyTimer); let n=10;
-  const el=$('whyCountdownBar'); if(el) el.textContent='⏳ Closing in 10 secs…';
+  clearInterval(whyTimer); let n=5;
+  const el=$('whyCountdownBar'); if(el) el.textContent='⏳ Closing in 5 secs…';
   const bar=$('whyProgress'); if(bar) bar.style.width='100%';
-  whyTimer=setInterval(()=>{ n--; const txt = n>0 ? `⏳ Closing in ${n} sec${n===1?'':'s'}…` : 'Closing…'; if(el) el.textContent=txt; if(bar) bar.style.width=Math.max(0,n/10*100)+'%'; if(n<=0){ clearInterval(whyTimer); $('whyOverlay').hidden=true; } }, 1000);
+  whyTimer=setInterval(()=>{ n--; const txt = n>0 ? `⏳ Closing in ${n} sec${n===1?'':'s'}…` : 'Closing…'; if(el) el.textContent=txt; if(bar) bar.style.width=Math.max(0,n/5*100)+'%'; if(n<=0){ clearInterval(whyTimer); $('whyOverlay').hidden=true; } }, 1000);
 }
 function whyStopCountdown(){ clearInterval(whyTimer); }
 $('whyBtn').onclick=()=>{ $('whyOverlay').hidden=false; whyStartCountdown(); };
