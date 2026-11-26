@@ -167,3 +167,18 @@ form h4{margin:18px 0 2px;font-size:14px;text-transform:uppercase;letter-spacing
 .row-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px}.row-btn:hover{color:#fff}
 footer{margin-top:26px}
 @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}.chart-card.wide{grid-column:span 1}.two-col{grid-template-columns:1fr}.verdict-score{display:none}}
+
+/* v15 UI polish: compact header, darker primary, nowrap counters, bottom-sheet modals */
+header.topbar{position:static}
+.btn.primary{background:#15803d}
+.btn.primary:hover{background:#166534}
+.btn:disabled{opacity:.85}
+.goal-top span:last-child{white-space:nowrap}
+.stat span{white-space:nowrap}
+.budget-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.budget-row .muted{white-space:nowrap}
+#driveClientId{word-break:break-all}
+@media (max-width:640px){
+  .welcome-overlay{align-items:flex-end}
+  .welcome-card{border-radius:20px 20px 0 0;max-width:100%;width:100%;margin:0}
+}

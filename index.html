@@ -15,7 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="styles.css?v=2026-11-26.14" />
+<link rel="stylesheet" href="styles.css?v=2026-11-26.15" />
 </head>
 <body>
 <!-- WELCOME / ONBOARDING -->
@@ -45,7 +45,7 @@
 <!-- WHY THIS APP -->
 <div class="welcome-overlay" id="whyOverlay" hidden>
   <div class="welcome-card" style="max-width:560px;text-align:left">
-    <h2>Why Money Profile?</h2>
+    <h2>Why Money Profile? <button class="btn ghost small" data-close-modal="whyOverlay" type="button" style="float:right">✕</button></h2>
     <p>✅ <strong>One entry a month.</strong> No daily tracking, no burnout — enter once after payday.</p>
     <p>💬 <strong>Plain English, not spreadsheets.</strong> "You kept $1,200 — your best yet" plus a tip.</p>
     <p>🔒 <strong>Private by design.</strong> No account, no ads, no selling your data. Numbers live in your browser and your own Drive file.</p>
@@ -58,7 +58,7 @@
 </div>
 <div class="welcome-overlay" id="householdOverlay" hidden>
   <div class="welcome-card" style="max-width:560px;text-align:left">
-    <h2>👨‍👩‍👧 Household total</h2>
+    <h2>Household total <button class="btn ghost small" data-close-modal="householdOverlay" type="button" style="float:right">✕</button></h2>
     <p class="muted">All profiles together — latest month each.</p>
     <div id="householdBody"></div>
     <button class="btn ghost" id="householdClose" type="button" style="margin-top:8px">Close</button>
@@ -66,7 +66,7 @@
 </div>
 <div class="welcome-overlay" id="yearOverlay" hidden>
   <div class="welcome-card" style="max-width:560px;text-align:left">
-    <h2>📅 My year in review</h2>
+    <h2>My year in review <button class="btn ghost small" data-close-modal="yearOverlay" type="button" style="float:right">✕</button></h2>
     <div id="yearBody"></div>
     <button class="btn primary" id="yearShareBtn" type="button">💚 Share my year</button>
     <button class="btn ghost" id="yearClose" type="button" style="margin-top:8px">Close</button>
@@ -95,6 +95,8 @@
       </div>
     </div>
     <div class="top-actions">
+      <button class="btn ghost" id="menuBtn" type="button">☰ Menu</button>
+      <div id="topActions" style="display:none">
       <button class="btn ghost" id="refreshAppBtn" type="button" title="Get the latest version, then pick a profile — your data stays safe, nothing is cleared">↻ Latest version</button>
       <button class="btn ghost" id="switchProfileBtn" type="button" title="Go back to the welcome page — use an existing profile or create a new one">👤 Switch profile</button>
       <button class="btn ghost" id="logoutBtn" type="button" title="Log out — back to the welcome page, Drive disconnected, your data stays saved">⎋ Logout</button>
@@ -228,7 +230,7 @@
   <!-- QUICK ADD + BILLS + INVESTMENTS + CHALLENGES -->
   <section class="two-col">
     <div class="card" data-section="quick">
-      <div class="card-head"><div><h3>⚡ Quick expense</h3><p>Spent something? Add it in 5 seconds.</p></div><button class="collapse-btn" data-collapse="quick" type="button">−</button></div>
+      <div class="card-head"><div><h3>⚡ Quick expense</h3><p>Add a spend in 5 seconds.</p></div><button class="collapse-btn" data-collapse="quick" type="button">−</button></div>
       <form id="quickForm" class="goal-form">
         <input id="quickAmount" type="number" min="0" step="0.01" placeholder="$ amount" required>
         <select id="quickCat"><option value="food">Food</option><option value="transport">Transport</option><option value="shopping">Shopping</option><option value="fun">Fun / Eating out</option><option value="housing">Housing</option><option value="subs">Subscriptions</option><option value="health">Health</option><option value="other">Other</option></select>
@@ -252,7 +254,7 @@
     </div>
     <div class="card" data-section="invest">
       <div class="card-head"><div><h3>📈 Investments & net worth</h3><p>Stocks, 401(k), gold, property — one total.</p></div><button class="collapse-btn" data-collapse="invest" type="button">−</button></div>
-      <p><strong id="investTotal">$0</strong> <span class="muted">total invested</span> &nbsp;•&nbsp; <span id="investNetWorth" class="muted"></span></p>
+      <p><strong id="investTotal">$0</strong> <span class="muted">total invested</span> <span id="investNetWorth" class="muted"></span></p>
       <div id="investList" class="goal-list"></div>
       <form id="investForm" class="goal-form">
         <input id="investName" placeholder="e.g. S&P 500" maxlength="30" required>
@@ -346,6 +348,6 @@
 
   <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
-<script src="app.js?v=2026-11-26.14"></script>
+<script src="app.js?v=2026-11-26.15"></script>
 </body>
 </html>

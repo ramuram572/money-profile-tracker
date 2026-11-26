@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.14';
+const APP_VERSION = '2026-11-26.15';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -605,6 +605,8 @@ document.querySelectorAll('[data-section]').forEach(sec=>{
 // Drive + / − : + expands, − minimises (same saved state as every other box)
 $('driveExpandBtn').onclick=()=>{ const p=prof(); if(p){ if(!p.uiCollapsed) p.uiCollapsed={}; p.uiCollapsed.drive=false; save(); applyCollapse(); } };
 
+$('menuBtn').onclick=()=>{ const el=$('topActions'); el.style.display = el.style.display==='none' ? 'contents' : 'none'; };
+document.querySelectorAll('[data-close-modal]').forEach(b=>b.onclick=()=>{ $(b.dataset.closeModal).hidden=true; });
 // Why / Household / Year in review
 $('whyBtn').onclick=()=>{ $('whyOverlay').hidden=false; };
 $('whyClose').onclick=()=>{ $('whyOverlay').hidden=true; };
@@ -625,7 +627,7 @@ $('yearBtn').onclick=()=>{
   const tot=k=>y.reduce((s,e)=>s+e[k],0); const spend=y.reduce((s,e)=>s+totalSpend(e),0); const surv=y.reduce((s,e)=>s+surplus(e),0);
   const best=y.reduce((a,b)=>!a||surplus(b)>surplus(a)?b:a,null);
   $('yearBody').innerHTML = y.length ? `<p><strong>${year} so far — ${y.length} month(s)</strong></p><p>Total income: ${money(tot('income'))}<br>Total spent: ${money(spend)}<br>Total saved: ${money(surv)}<br>Green months: ${y.filter(e=>surplus(e)>=0).length}/${y.length}<br>Best month: ${best?monthLabel(best.month)+' (+'+money(surplus(best))+')':'—'}</p>` : '<p class="muted">Add months this year to see your year in review.</p>';
-  $('yearOverlay').hidden=false;
+  $('yearShareBtn').disabled = !y.length; $('yearOverlay').hidden=false;
 };
 $('yearClose').onclick=()=>{ $('yearOverlay').hidden=true; };
 $('yearShareBtn').onclick=()=>{ $('yearOverlay').hidden=true; $('shareBtn').click(); };
