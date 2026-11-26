@@ -15,7 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="styles.css?v=2026-11-26.24" />
+<link rel="stylesheet" href="styles.css?v=2026-11-26.25" />
 </head>
 <body>
 <!-- WELCOME / ONBOARDING -->
@@ -75,7 +75,8 @@
     <p class="muted small">Almost there — one quick pick</p>
     <h2>Left hand or right hand?</h2>
     <div class="lego-scene" aria-hidden="true">
-      <div class="lego-fig" id="handLego"><div class="lego-head" style="background:#fde047;border-color:#a16207"><span class="lego-eye"></span><span class="lego-eye"></span><span class="lego-smile"></span></div><div class="lego-body" style="background:#16a34a;border-color:#14532d">💰</div><div class="lego-legs"></div></div>
+      <div class="lego-fig hand-fig" id="handLegoLeft"><div class="lego-head" style="background:#fde047;border-color:#a16207"><span class="lego-eye"></span><span class="lego-eye"></span><span class="lego-mouth smile"></span></div><div class="lego-body" style="background:#16a34a;border-color:#14532d">👈</div><div class="lego-legs"></div><div class="hand-label">Left</div></div>
+      <div class="lego-fig hand-fig" id="handLegoRight"><div class="lego-head" style="background:#fde047;border-color:#a16207"><span class="lego-eye"></span><span class="lego-eye"></span><span class="lego-mouth smile"></span></div><div class="lego-body" style="background:#2563eb;border-color:#1e40af">👉</div><div class="lego-legs"></div><div class="hand-label">Right</div></div>
     </div>
     <p>Pick the hand you hold your phone with.<br>Your buttons will move to that side.</p>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
@@ -395,6 +396,6 @@
 
   <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
-<script src="app.js?v=2026-11-26.24"></script>
+<script src="app.js?v=2026-11-26.25"></script>
 </body>
 </html>

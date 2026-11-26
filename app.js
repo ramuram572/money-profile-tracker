@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.24';
+const APP_VERSION = '2026-11-26.25';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -493,8 +493,12 @@ function applyHandedness(hand){
 }
 function chooseHand(hand){
   applyHandedness(hand);
-  const fig=$('handLego'); if(fig) fig.classList.add(hand==='left'?'slide-left':'slide-right');
-  setTimeout(()=>{ $('handOverlay').hidden=true; if(fig) fig.classList.remove('slide-left','slide-right'); }, 600);
+  const left=$('handLegoLeft'), right=$('handLegoRight');
+  const chosen = hand==='left' ? left : right, other = hand==='left' ? right : left;
+  // Chosen one smiles and walks off in its direction; the other turns sad and walks the other way.
+  if(chosen){ chosen.querySelector('.lego-mouth').className='lego-mouth smile'; chosen.classList.add(hand==='left'?'walk-left':'walk-right'); }
+  if(other){ other.querySelector('.lego-mouth').className='lego-mouth sad'; other.classList.add(hand==='left'?'walk-right':'walk-left'); }
+  setTimeout(()=>{ $('handOverlay').hidden=true; [left,right].forEach(f=>{ if(!f) return; f.classList.remove('walk-left','walk-right'); f.querySelector('.lego-mouth').className='lego-mouth smile'; }); }, 1400);
 }
 function goToMainPage(){
   clearInterval(whyPageTimer); $('whyPageOverlay').hidden=true;
@@ -503,6 +507,8 @@ function goToMainPage(){
   if(!localStorage.getItem('moneyProfileHandedness')) $('handOverlay').hidden=false;
 }
 $('handLeftBtn').onclick=()=>chooseHand('left');
+if($('handLegoLeft')) $('handLegoLeft').onclick=()=>chooseHand('left');
+if($('handLegoRight')) $('handLegoRight').onclick=()=>chooseHand('right');
 $('handRightBtn').onclick=()=>chooseHand('right');
 $('handLaterBtn').onclick=()=>{ $('handOverlay').hidden=true; };
 $('handBtn').onclick=()=>{ const cur=localStorage.getItem('moneyProfileHandedness')==='left'?'right':'left'; applyHandedness(cur); };

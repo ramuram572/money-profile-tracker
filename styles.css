@@ -222,3 +222,14 @@ html.left-handed .top-actions #logoutBtn{margin-left:0;margin-right:auto}
 #handLego{transition:transform .6s ease}
 #handLego.slide-left{transform:translateX(-70px) rotate(-8deg)}
 #handLego.slide-right{transform:translateX(70px) rotate(8deg)}
+
+/* v25 hand pick: chosen walks off smiling, other walks off sad */
+.lego-mouth{position:absolute;bottom:7px;left:14px;width:16px;height:7px}
+.lego-mouth.smile{border-bottom:3px solid #111;border-radius:0 0 10px 10px}
+.lego-mouth.sad{border-top:3px solid #111;border-radius:10px 10px 0 0;bottom:4px}
+.hand-label{text-align:center;font-weight:800;font-size:13px;margin-top:4px}
+.hand-fig{cursor:pointer}
+@keyframes walkLeft{0%{transform:translateX(0);opacity:1}70%{opacity:1}100%{transform:translateX(-160px) translateY(4px);opacity:0}}
+@keyframes walkRight{0%{transform:translateX(0);opacity:1}70%{opacity:1}100%{transform:translateX(160px) translateY(4px);opacity:0}}
+.hand-fig.walk-left{animation:walkLeft 1.2s ease-in forwards}
+.hand-fig.walk-right{animation:walkRight 1.2s ease-in forwards}
