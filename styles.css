@@ -47,6 +47,16 @@ main{padding:26px 0 40px}
 .picker-item small{color:var(--muted);display:block;font-size:12px}
 .picker-item .tick{margin-left:auto;color:#22c55e;font-weight:900}
 .picker-add{margin-bottom:10px}
+.btn.danger{background:#7f1d1d;color:#fecaca;border:1px solid #991b1b}
+.btn.danger:hover{background:#991b1b}
+/* Drive connected — green bar, collapsed */
+.drive-collapsed{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:linear-gradient(90deg,#16a34a,#22c55e);color:#fff;font-weight:700;border-radius:12px;padding:12px 16px;width:100%}
+.drive-collapsed[hidden]{display:none}
+.drive-collapsed .muted{color:#dcfce7}
+.drive-collapsed .btn{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4)}
+.drive-card.connected-collapsed{background:linear-gradient(90deg,#052e16,#14532d);border-color:#22c55e}
+.drive-card.connected-collapsed>div:not(#driveCollapsedBar),.drive-card.connected-collapsed .drive-fields{display:none}
+.drive-card.connected-collapsed #driveCollapsedBar{display:flex}
 /* Light theme */
 html[data-theme="light"]{--bg:#f1f5f9;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0}
 html[data-theme="light"] body{background:linear-gradient(180deg,#e0f2fe,#f1f5f9)}

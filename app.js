@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.6';
+const APP_VERSION = '2026-11-26.7';
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
 const EXPENSE_KEYS = [['housing','Housing'],['food','Food'],['transport','Transport'],['subs','Subscriptions'],['shopping','Shopping'],['fun','Fun / Eating out'],['health','Health'],['other','Other']];
@@ -218,6 +218,24 @@ $('currency').addEventListener('change', e=>{ const pr=prof(); if(!pr) return; p
 $('savingsGoal').addEventListener('input', e=>{ const pr=prof(); if(!pr) return; pr.goal=parseFloat(e.target.value)||20; save(); render(); });
 $('profileSelect').addEventListener('change', e=>{ state.currentProfileId=e.target.value; save(); render(); });
 $('newProfileBtn').onclick=()=>{ welcomeOpen=true; $('welcomeName').value=''; render(); $('welcomeOverlay').scrollIntoView({behavior:'smooth'}); $('welcomeName').focus(); };
+// 🗑 Delete profile — HARD DELETE: removes the profile, all its months,
+// goals and budgets from localStorage AND from the Drive JSON file on sync.
+// Warning first, no undo.
+function deleteProfileById(id){
+  const target = state.profiles.find(x=>x.id===id); if(!target) return;
+  const ok = confirm(`⚠️ Delete profile "${target.name||'Unnamed profile'}" PERMANENTLY?\n\nThis will delete ALL of its data permanently:\n• ${target.entries.length} month(s) of income, spending and net worth\n• ${target.goals.length} savings goal(s)\n• Budgets\n\nThis cannot be undone. The profile will also be removed from money-profile.json in Google Drive when you sync next.`);
+  if(!ok) return;
+  state.profiles = state.profiles.filter(x=>x.id!==id);
+  if(state.currentProfileId===id) state.currentProfileId = state.profiles[0] ? state.profiles[0].id : null;
+  welcomeOpen = state.profiles.length === 0;
+  save(); render();
+  $('profilePickerOverlay').hidden = true;
+  // Hard-delete from Drive too: overwrite money-profile.json with the
+  // state that no longer contains this profile.
+  if(driveToken) driveSyncTo();
+  alert(`Profile "${target.name||'Unnamed profile'}" was deleted permanently.`);
+}
+$('deleteProfileBtn').onclick=()=>{ const p=prof(); if(p) deleteProfileById(p.id); };
 $('clearAllBtn').onclick=()=>{ const pr=prof(); if(!pr) return; if(confirm('Delete ALL months in this profile? This cannot be undone.')){ pr.entries=[]; save(); render(); } };
 $('exportBtn').onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
@@ -260,6 +278,11 @@ function driveSetConnected(connected){
   $('driveConnectBtn').disabled = connected;
   $('driveConnectBtn').textContent = connected ? '● Connected' : 'Connect Drive';
   $('driveStatus').className = connected ? 'muted green-text' : 'muted';
+  // Connected = green bar, box collapsed. Expand to see details again.
+  $('driveCard').classList.toggle('connected-collapsed', connected);
+  $('driveCollapsedBar').hidden = !connected;
+  const last = localStorage.getItem('moneyProfileDriveLastSync');
+  $('driveCollapsedLast').textContent = last ? 'Last synced: ' + last : 'Not synced yet — tap Show details, then Sync now';
 }
 function driveClientId(){ return ($('driveClientId').value || '').trim(); }
 function driveInit(){
@@ -302,6 +325,7 @@ async function driveSyncTo(){
     const now = new Date().toLocaleString();
     localStorage.setItem('moneyProfileDriveLastSync', now);
     $('driveLast').textContent = 'Last synced: ' + now;
+    $('driveCollapsedLast').textContent = 'Last synced: ' + now;
     driveSetStatus('Synced to Drive ✓ — open the app on any device, Connect Drive with the same Google account, then “Load from Drive”.');
   }catch(e){ driveSetStatus('Sync failed: ' + e.message + ' — try Connect again.'); }
 }
@@ -333,6 +357,8 @@ async function driveLoadFrom(){
 $('driveConnectBtn').onclick=()=>{ if(driveInit()) driveClient.requestAccessToken(); };
 $('driveSyncBtn').onclick=driveSyncTo;
 $('driveLoadBtn').onclick=driveLoadFrom;
+$('driveExpandBtn').onclick=()=>{ $('driveCard').classList.remove('connected-collapsed'); };
+$('driveCollapsedDisconnect').onclick=()=>{ $('driveDisconnectBtn').click(); };
 $('driveDisconnectBtn').onclick=async ()=>{
   if(driveToken){ try{ await fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(driveToken), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }); }catch(e){ /* token expires on its own — disconnect locally anyway */ } }
   driveToken = null; driveFileId = null;
@@ -378,7 +404,8 @@ $('refreshAppBtn').onclick=async ()=>{
 // with "Add new profile" in the same list. No reload, no data cleared.
 function renderProfilePicker(){
   const list = $('profilePickerList');
-  list.innerHTML = state.profiles.map(x=>`<button class="picker-item" type="button" data-pick="${x.id}"><span class="avatar">${x.name?x.name[0].toUpperCase():'?'}</span><span><strong>${x.name||'Unnamed profile'}</strong><small>${x.entries.length} month${x.entries.length===1?'':'s'} tracked</small></span>${x.id===state.currentProfileId?'<span class="tick">✓</span>':''}</button>`).join('') || '<p class="muted">No profiles yet — add a new one below.</p>';
+  list.innerHTML = state.profiles.map(x=>`<div class="picker-item"><button type="button" data-pick="${x.id}" style="display:flex;gap:12px;align-items:center;flex:1;background:none;border:none;color:inherit;font:inherit;cursor:pointer;text-align:left"><span class="avatar">${x.name?x.name[0].toUpperCase():'?'}</span><span><strong>${x.name||'Unnamed profile'}</strong><small>${x.entries.length} month${x.entries.length===1?'':'s'} tracked</small></span>${x.id===state.currentProfileId?'<span class="tick">✓</span>':''}</button><button class="btn danger small" type="button" data-pick-del="${x.id}" title="Delete this profile permanently">🗑</button></div>`).join('') || '<p class="muted">No profiles yet — add a new one below.</p>';
+  list.querySelectorAll('[data-pick-del]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); deleteProfileById(b.dataset.pickDel); });
   list.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{
     state.currentProfileId = b.dataset.pick; welcomeOpen = false; save(); render();
     $('profilePickerOverlay').hidden = true;

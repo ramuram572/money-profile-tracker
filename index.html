@@ -11,7 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="styles.css?v=2026-11-26.6" />
+<link rel="stylesheet" href="styles.css?v=2026-11-26.7" />
 </head>
 <body>
 <!-- WELCOME / ONBOARDING -->
@@ -89,6 +89,7 @@
         <label>Profile</label>
         <select id="profileSelect"></select>
         <button class="btn ghost small" id="newProfileBtn" type="button" style="margin-top:6px">+ New profile</button>
+        <button class="btn danger small" id="deleteProfileBtn" type="button" style="margin-top:6px" title="Permanently delete this profile and all its data">🗑 Delete profile</button>
       </div>
       <div>
         <label>Currency</label>
@@ -107,6 +108,12 @@
 
   <!-- DRIVE SYNC -->
   <section class="card drive-card" id="driveCard">
+    <div id="driveCollapsedBar" class="drive-collapsed" hidden>
+      <span>● Connected to Google Drive ✓</span>
+      <span class="muted small" id="driveCollapsedLast"></span>
+      <button class="btn ghost small" id="driveExpandBtn" type="button" title="Expand — show Drive details">＋</button>
+      <button class="btn ghost small" id="driveCollapsedDisconnect" type="button">Disconnect</button>
+    </div>
     <div>
       <h3>☁ Google Drive sync — use on any device</h3>
       <p class="muted" id="driveStatus">Not connected. Your data is only in this browser until you sync it to Drive.</p>
@@ -246,6 +253,6 @@
 
   <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
-<script src="app.js?v=2026-11-26.6"></script>
+<script src="app.js?v=2026-11-26.7"></script>
 </body>
 </html>
