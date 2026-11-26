@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.13';
+const APP_VERSION = '2026-11-26.14';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -16,7 +16,7 @@ function numVal(v){ const n=Number(v); return Number.isFinite(n)?n:0; }
 function validateState(d){
   if(!d || !Array.isArray(d.profiles)) return null;
   d.profiles.forEach((pr,i)=>{
-    if(!pr.id) pr.id='p'+(i+1); pr.name=String(pr.name||'').slice(0,40);
+    if(!pr.id) pr.id='p'+(i+1); pr.id=String(pr.id).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,30)||('p'+(i+1)); pr.name=String(pr.name||'').slice(0,40);
     pr.currency=['USD','INR','EUR','GBP'].includes(pr.currency)?pr.currency:'USD'; pr.goal=numVal(pr.goal)||20;
     if(!Array.isArray(pr.entries)) pr.entries=[];
     pr.entries=pr.entries.filter(e=>e && typeof e.month==='string').map(e=>({month:e.month, income:Math.max(0,numVal(e.income)), saved:Math.max(0,numVal(e.saved)), assets:Math.max(0,numVal(e.assets)), debts:Math.max(0,numVal(e.debts)), expenses:Object.fromEntries(EXPENSE_KEYS.map(([k])=>[k,Math.max(0,numVal(e.expenses&&e.expenses[k]))]))}));
@@ -90,7 +90,7 @@ function renderBillsInvest(){
   $('billList').innerHTML = p.bills.length ? p.bills.map(b=>{
     const dueIn = b.day>=day ? b.day-day : b.day+30-day;
     const paid = b.paidMonth === `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-    return `<div class="goal-item"><div class="goal-top"><span>${paid?'✅':'🧾'} ${b.name}</span><span>${money(b.amount)} • due day ${b.day} ${paid?'(paid)':`(${dueIn}d)`}</span></div><div style="margin-top:6px"><button class="btn ghost small" data-bill-pay="${b.id}" type="button">${paid?'Mark unpaid':'Mark paid ✓'}</button> <button class="btn ghost small" data-bill-del="${b.id}" type="button">🗑</button></div></div>`;
+    return `<div class="goal-item"><div class="goal-top"><span>${paid?'✅':'🧾'} ${esc(b.name)}</span><span>${money(b.amount)} • due day ${b.day} ${paid?'(paid)':`(${dueIn}d)`}</span></div><div style="margin-top:6px"><button class="btn ghost small" data-bill-pay="${b.id}" type="button">${paid?'Mark unpaid':'Mark paid ✓'}</button> <button class="btn ghost small" data-bill-del="${b.id}" type="button">🗑</button></div></div>`;
   }).join('') : '<p class="muted">No bills yet — add rent, EMI or a subscription above.</p>';
   $('billList').querySelectorAll('[data-bill-pay]').forEach(b=>b.onclick=()=>{ const x=p.bills.find(y=>y.id===b.dataset.billPay); const m=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`; x.paidMonth = x.paidMonth===m ? '' : m; save(); render(); });
   $('billList').querySelectorAll('[data-bill-del]').forEach(b=>b.onclick=()=>{ if(confirm('Delete this bill?')){ p.bills=p.bills.filter(y=>y.id!==b.dataset.billDel); save(); render(); } });
@@ -98,7 +98,7 @@ function renderBillsInvest(){
   $('investTotal').textContent=money(invTotal);
   const entries=sorted(); const last=entries[entries.length-1];
   $('investNetWorth').textContent = last ? 'Net worth incl. investments: ' + money(netWorth(last)+invTotal) : '';
-  $('investList').innerHTML = p.investments.length ? p.investments.map(x=>`<div class="goal-item"><div class="goal-top"><span>📈 ${x.name} <span class="muted small">${x.type}</span></span><span>${money(x.value)}</span></div><button class="btn ghost small" data-inv-del="${x.id}" type="button">🗑</button></div>`).join('') : '<p class="muted">No investments yet.</p>';
+  $('investList').innerHTML = p.investments.length ? p.investments.map(x=>`<div class="goal-item"><div class="goal-top"><span>📈 ${esc(x.name)} <span class="muted small">${esc(x.type)}</span></span><span>${money(x.value)}</span></div><button class="btn ghost small" data-inv-del="${x.id}" type="button">🗑</button></div>`).join('') : '<p class="muted">No investments yet.</p>';
   $('investList').querySelectorAll('[data-inv-del]').forEach(b=>b.onclick=()=>{ p.investments=p.investments.filter(y=>y.id!==b.dataset.invDel); save(); render(); });
   const challenges=[
     {id:'c500', name:'Save $500 this month', target:500, prog: last? Math.max(0,surplus(last)) : 0},
@@ -115,7 +115,7 @@ function renderGoals(){
   const p=prof(); if(!p) return;
   $('goalList').innerHTML = p.goals.length ? p.goals.map(g=>{
     const pct=Math.min(100, Math.round((g.saved||0)/g.target*100));
-    return `<div class="goal-item"><div class="goal-top"><span>🎯 ${g.name}</span><span>${money(g.saved||0)} / ${money(g.target)}</span></div><div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div><div style="display:flex;gap:6px;align-items:center"><span class="muted small">${pct}% there ${pct>=100?'🎉 Goal reached!':''}</span><button class="btn ghost small" data-goal-add="${g.id}" type="button">+ $100</button><button class="btn ghost small" data-goal-del="${g.id}" type="button">🗑</button></div></div>`;
+    return `<div class="goal-item"><div class="goal-top"><span>🎯 ${esc(g.name)}</span><span>${money(g.saved||0)} / ${money(g.target)}</span></div><div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div><div style="display:flex;gap:6px;align-items:center"><span class="muted small">${pct}% there ${pct>=100?'🎉 Goal reached!':''}</span><button class="btn ghost small" data-goal-add="${g.id}" type="button">+ $100</button><button class="btn ghost small" data-goal-del="${g.id}" type="button">🗑</button></div></div>`;
   }).join('') : '<p class="muted">No goals yet — add one below, e.g. Vacation $2,000.</p>';
   $('goalList').querySelectorAll('[data-goal-add]').forEach(b=>b.onclick=()=>{ const g=p.goals.find(x=>x.id===b.dataset.goalAdd); g.saved=(g.saved||0)+100; save(); render(); if(g.saved>=g.target) celebrate(); });
   $('goalList').querySelectorAll('[data-goal-del]').forEach(b=>b.onclick=()=>{ if(confirm('Delete this goal?')){ p.goals=p.goals.filter(x=>x.id!==b.dataset.goalDel); save(); render(); } });
@@ -178,9 +178,9 @@ function render(){
   const p = prof();
   const entries = sorted();
   // Profile dropdown — pick an existing profile, or create a new one
-  $('profileSelect').innerHTML = state.profiles.map(x=>`<option value="${x.id}">${x.name||'Unnamed profile'}${x.entries.length?` (${x.entries.length} mo)`:''}</option>`).join('');
+  $('profileSelect').innerHTML = state.profiles.map(x=>`<option value="${esc(x.id)}">${esc(x.name)||'Unnamed profile'}${x.entries.length?` (${x.entries.length} mo)`:''}</option>`).join('');
   if(p) $('profileSelect').value = p.id;
-  $('welcomeProfileSelect').innerHTML = state.profiles.map(x=>`<option value="${x.id}">${x.name||'Unnamed profile'}${x.entries.length?` (${x.entries.length} mo)`:''}</option>`).join('');
+  $('welcomeProfileSelect').innerHTML = state.profiles.map(x=>`<option value="${esc(x.id)}">${esc(x.name)||'Unnamed profile'}${x.entries.length?` (${x.entries.length} mo)`:''}</option>`).join('');
   $('welcomeExisting').hidden = state.profiles.length === 0;
   if(p) $('welcomeProfileSelect').value = p.id;
   // Welcome: show when there is no profile yet, or when the user tapped
@@ -341,7 +341,7 @@ $('exportBtn').onclick=()=>{
 };
 $('importFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(Array.isArray(d.profiles)){ state=d; if(!state.currentProfileId) state.currentProfileId=state.profiles[0].id; save(); render(); alert('Imported '+state.profiles.length+' profile(s).'); } else if(Array.isArray(d.entries)){ const pr=prof(); if(!pr){ alert('Create a profile first.'); return; } pr.entries=d.entries; save(); render(); alert('Imported '+d.entries.length+' months.'); } else alert('That file does not look like a Money Profile export.'); }catch(err){ alert('Could not read that file.'); } }; r.readAsText(f);
+  const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(Array.isArray(d.profiles)){ const v=validateState(d); if(!v){ alert('That file is not a valid Money Profile export.'); return; } state=v; save(); render(); alert('Imported '+state.profiles.length+' profile(s).'); } else if(Array.isArray(d.entries)){ const pr=prof(); if(!pr){ alert('Create a profile first.'); return; } pr.entries=d.entries; save(); render(); alert('Imported '+d.entries.length+' months.'); } else alert('That file does not look like a Money Profile export.'); }catch(err){ alert('Could not read that file.'); } }; r.readAsText(f);
 });
 $('sampleBtn').onclick=()=>{
   const pr=prof(); if(!pr){ alert('Create a profile first.'); return; }
@@ -510,7 +510,7 @@ $('refreshAppBtn').onclick=async ()=>{
 // with "Add new profile" in the same list. No reload, no data cleared.
 function renderProfilePicker(){
   const list = $('profilePickerList');
-  list.innerHTML = state.profiles.map(x=>`<div class="picker-item"><button type="button" data-pick="${x.id}" style="display:flex;gap:12px;align-items:center;flex:1;background:none;border:none;color:inherit;font:inherit;cursor:pointer;text-align:left"><span class="avatar">${x.name?x.name[0].toUpperCase():'?'}</span><span><strong>${x.name||'Unnamed profile'}</strong><small>${x.entries.length} month${x.entries.length===1?'':'s'} tracked</small></span>${x.id===state.currentProfileId?'<span class="tick">✓</span>':''}</button><button class="btn danger small" type="button" data-pick-del="${x.id}" title="Delete this profile permanently">🗑</button></div>`).join('') || '<p class="muted">No profiles yet — add a new one below.</p>';
+  list.innerHTML = state.profiles.map(x=>`<div class="picker-item"><button type="button" data-pick="${x.id}" style="display:flex;gap:12px;align-items:center;flex:1;background:none;border:none;color:inherit;font:inherit;cursor:pointer;text-align:left"><span class="avatar">${esc(x.name?x.name[0].toUpperCase():'?')}</span><span><strong>${esc(x.name)||'Unnamed profile'}</strong><small>${x.entries.length} month${x.entries.length===1?'':'s'} tracked</small></span>${x.id===state.currentProfileId?'<span class="tick">✓</span>':''}</button><button class="btn danger small" type="button" data-pick-del="${x.id}" title="Delete this profile permanently">🗑</button></div>`).join('') || '<p class="muted">No profiles yet — add a new one below.</p>';
   list.querySelectorAll('[data-pick-del]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); deleteProfileById(b.dataset.pickDel); });
   list.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{
     state.currentProfileId = b.dataset.pick; welcomeOpen = false; save(); render();
