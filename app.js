@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.28';
+const APP_VERSION = '2026-11-26.29';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -520,7 +520,7 @@ $('whyPageContinue').onclick=goToMainPage;
 $('welcomeStart').onclick=()=>{
   const name = $('welcomeName').value.trim();
   if(!name){ $('welcomeName').focus(); $('welcomeName').placeholder = 'Please enter your name to continue'; return; }
-  if(state.profiles.some(x=>x.name && x.name.toLowerCase()===name.toLowerCase()) && !confirm('A profile named "'+name+'" already exists. Create another one with the same name?')) return;
+  if(state.profiles.some(x=>x.name && x.name.toLowerCase()===name.toLowerCase()) && !confirm('A profile named "'+name+'" already exists. Create another one with the same name?')){ const m=$('welcomeMsg'); if(m) m.textContent='⚠️ A profile named "'+name+'" already exists — pick a different name, or choose it from "Use an existing profile".'; return; }
   // If there is one unnamed profile (migrated from the old single-profile
   // version), just name it instead of creating a duplicate.
   if(state.profiles.length===1 && !prof().name){ prof().name=name; }
