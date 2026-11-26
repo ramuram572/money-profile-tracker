@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.19';
+const APP_VERSION = '2026-11-26.21';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -475,6 +475,22 @@ $('driveBtn').onclick=()=>{ $('driveCard').scrollIntoView({behavior:'smooth'}); 
 $('driveClientId').addEventListener('input', e=>localStorage.setItem('moneyProfileDriveClientId', e.target.value.trim()));
 (()=>{ const savedId = localStorage.getItem('moneyProfileDriveClientId') || DEFAULT_DRIVE_CLIENT_ID; if(savedId) $('driveClientId').value = savedId; const last = localStorage.getItem('moneyProfileDriveLastSync'); if(last) $('driveLast').textContent = 'Last synced: ' + last; })();
 
+// 3-page flow: Page 1 login -> Page 2 Why (10s countdown) -> Page 3 main page.
+let whyPageTimer=null;
+function showWhyPage(){
+  $('welcomeOverlay').hidden=true; $('profilePickerOverlay').hidden=true;
+  $('whyPageOverlay').hidden=false;
+  clearInterval(whyPageTimer); let n=10;
+  const bar=$('whyPageCountdownBar'), prog=$('whyPageProgress');
+  if(bar) bar.textContent='⏳ Going to your money page in 10 secs…';
+  if(prog) prog.style.width='100%';
+  whyPageTimer=setInterval(()=>{ n--; if(bar) bar.textContent = n>0 ? `⏳ Going to your money page in ${n} sec${n===1?'':'s'}…` : 'Going to your money page…'; if(prog) prog.style.width=Math.max(0,n/10*100)+'%'; if(n<=0){ clearInterval(whyPageTimer); goToMainPage(); } }, 1000);
+}
+function goToMainPage(){
+  clearInterval(whyPageTimer); $('whyPageOverlay').hidden=true;
+  welcomeOpen=false; save(); render(); history.replaceState(null, '', location.pathname);
+}
+$('whyPageContinue').onclick=goToMainPage;
 $('welcomeStart').onclick=()=>{
   const name = $('welcomeName').value.trim();
   if(!name){ $('welcomeName').focus(); $('welcomeName').placeholder = 'Please enter your name to continue'; return; }
@@ -485,14 +501,11 @@ $('welcomeStart').onclick=()=>{
     const p = { id:'p'+Date.now(), name, currency:'USD', goal:20, entries:[] };
     state.profiles.push(p); state.currentProfileId = p.id;
   }
-  welcomeOpen = false; save(); render();
-  history.replaceState(null, '', location.pathname);
-  if(driveToken) driveSyncTo(); // save the name to Drive right away if already connected
+  save(); if(driveToken) driveSyncTo(); showWhyPage();
 };
 $('welcomeUseExisting').onclick=()=>{
   state.currentProfileId = $('welcomeProfileSelect').value;
-  welcomeOpen = false; save(); render();
-  history.replaceState(null, '', location.pathname);
+  save(); showWhyPage();
 };
 $('welcomeName').addEventListener('keydown', e=>{ if(e.key==='Enter') $('welcomeStart').click(); });
 
@@ -513,9 +526,7 @@ function renderProfilePicker(){
   list.innerHTML = state.profiles.map(x=>`<div class="picker-item"><button type="button" data-pick="${x.id}" style="display:flex;gap:12px;align-items:center;flex:1;background:none;border:none;color:inherit;font:inherit;cursor:pointer;text-align:left"><span class="avatar">${esc(x.name?x.name[0].toUpperCase():'?')}</span><span><strong>${esc(x.name)||'Unnamed profile'}</strong><small>${x.entries.length} month${x.entries.length===1?'':'s'} tracked</small></span>${x.id===state.currentProfileId?'<span class="tick">✓</span>':''}</button><button class="btn danger small" type="button" data-pick-del="${x.id}" title="Delete this profile permanently">🗑</button></div>`).join('') || '<p class="muted">No profiles yet — add a new one below.</p>';
   list.querySelectorAll('[data-pick-del]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); deleteProfileById(b.dataset.pickDel); });
   list.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{
-    state.currentProfileId = b.dataset.pick; welcomeOpen = false; save(); render();
-    $('profilePickerOverlay').hidden = true;
-    history.replaceState(null, '', location.pathname);
+    state.currentProfileId = b.dataset.pick; save(); showWhyPage();
   });
 }
 function openProfilePicker(){ renderProfilePicker(); $('profilePickerOverlay').hidden = false; }
@@ -610,10 +621,10 @@ document.querySelectorAll('[data-close-modal]').forEach(b=>b.onclick=()=>{ $(b.d
 // Why / Household / Year in review
 let whyTimer=null;
 function whyStartCountdown(){
-  clearInterval(whyTimer); let n=30;
-  const el=$('whyCountdownBar'); if(el) el.textContent='⏳ Closing in 30 secs…';
+  clearInterval(whyTimer); let n=10;
+  const el=$('whyCountdownBar'); if(el) el.textContent='⏳ Closing in 10 secs…';
   const bar=$('whyProgress'); if(bar) bar.style.width='100%';
-  whyTimer=setInterval(()=>{ n--; const txt = n>0 ? `⏳ Closing in ${n} sec${n===1?'':'s'}…` : 'Closing…'; if(el) el.textContent=txt; if(bar) bar.style.width=Math.max(0,n/30*100)+'%'; if(n<=0){ clearInterval(whyTimer); $('whyOverlay').hidden=true; } }, 1000);
+  whyTimer=setInterval(()=>{ n--; const txt = n>0 ? `⏳ Closing in ${n} sec${n===1?'':'s'}…` : 'Closing…'; if(el) el.textContent=txt; if(bar) bar.style.width=Math.max(0,n/10*100)+'%'; if(n<=0){ clearInterval(whyTimer); $('whyOverlay').hidden=true; } }, 1000);
 }
 function whyStopCountdown(){ clearInterval(whyTimer); }
 $('whyBtn').onclick=()=>{ $('whyOverlay').hidden=false; whyStartCountdown(); };
