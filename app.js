@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.35';
+const APP_VERSION = '2026-11-26.36';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -488,7 +488,7 @@ function showWhyPage(){
 }
 function applyHandedness(hand){
   document.documentElement.classList.toggle('left-handed', hand==='left');
-  localStorage.setItem('moneyProfileHandedness', hand);
+  const pr=prof(); if(pr){ pr.handedness=hand; save(); } // hand is unique per profile
   const b=$('handBtn'); if(b) b.textContent = hand==='left' ? '🤚 Hand: Left' : '🤚 Hand: Right';
   const pill=$('handPill'); if(pill) pill.textContent = hand==='left' ? '🤚 Left' : '🤚 Right';
 }
@@ -508,7 +508,9 @@ function goToHandPage(){
 function goToMainPage(){
   clearInterval(whyPageTimer); $('whyPageOverlay').hidden=true;
   // Page 3 after the countdown: hand-select page first, if never picked.
-  if(!localStorage.getItem('moneyProfileHandedness') && localStorage.getItem('moneyProfileHandAsked')!=='never') return goToHandPage();
+  const pr=prof();
+  if(pr && pr.handedness){ document.documentElement.classList.toggle('left-handed', pr.handedness==='left'); const b=$('handBtn'); if(b) b.textContent = pr.handedness==='left' ? '🤚 Hand: Left' : '🤚 Hand: Right'; const pill=$('handPill'); if(pill) pill.textContent = pr.handedness==='left' ? '🤚 Left' : '🤚 Right'; }
+  if(pr && !pr.handedness && pr.handAsked!=='never') return goToHandPage(); // new profile → Page 3
   welcomeOpen=false; save(); render(); history.replaceState(null, '', location.pathname);
 }
 $('handLeftBtn').onclick=()=>chooseHand('left');
@@ -516,11 +518,11 @@ if($('handLegoLeft')) $('handLegoLeft').onclick=()=>chooseHand('left');
 if($('handLegoRight')) $('handLegoRight').onclick=()=>chooseHand('right');
 $('handRightBtn').onclick=()=>chooseHand('right');
 $('handLaterBtn').onclick=()=>{ $('handOverlay').hidden=true; welcomeOpen=false; save(); render(); history.replaceState(null, '', location.pathname); };
-$('handNeverBtn').onclick=()=>{ localStorage.setItem('moneyProfileHandAsked','never'); $('handOverlay').hidden=true; welcomeOpen=false; save(); render(); history.replaceState(null, '', location.pathname); };
-$('handBtn').onclick=()=>{ const cur=localStorage.getItem('moneyProfileHandedness')==='left'?'right':'left'; applyHandedness(cur); };
-$('handResetBtn').onclick=()=>{ localStorage.removeItem('moneyProfileHandedness'); localStorage.removeItem('moneyProfileHandAsked'); document.documentElement.classList.remove('left-handed'); goToHandPage(); };
+$('handNeverBtn').onclick=()=>{ const pr=prof(); if(pr){ pr.handAsked='never'; } $('handOverlay').hidden=true; welcomeOpen=false; save(); render(); history.replaceState(null, '', location.pathname); };
+$('handBtn').onclick=()=>{ const cur=(prof()&&prof().handedness)==='left'?'right':'left'; applyHandedness(cur); };
+$('handResetBtn').onclick=()=>{ const pr=prof(); if(pr){ delete pr.handedness; delete pr.handAsked; save(); } document.documentElement.classList.remove('left-handed'); goToHandPage(); };
 // Apply saved handedness on load — do NOT save a default, or the banner would never show.
-(()=>{ const h=localStorage.getItem('moneyProfileHandedness'); if(h){ document.documentElement.classList.toggle('left-handed', h==='left'); const b=$('handBtn'); if(b) b.textContent = h==='left' ? '🤚 Hand: Left' : '🤚 Hand: Right'; const pill=$('handPill'); if(pill) pill.textContent = h==='left' ? '🤚 Left' : '🤚 Right'; } })();
+(()=>{ const pr=prof(); if(pr && !pr.handedness){ const old=localStorage.getItem('moneyProfileHandedness'); if(old){ pr.handedness=old; save(); } } const h=pr&&pr.handedness; if(h){ document.documentElement.classList.toggle('left-handed', h==='left'); const b=$('handBtn'); if(b) b.textContent = h==='left' ? '🤚 Hand: Left' : '🤚 Hand: Right'; const pill=$('handPill'); if(pill) pill.textContent = h==='left' ? '🤚 Left' : '🤚 Right'; } })();
 $('whyPageContinue').onclick=goToMainPage;
 $('welcomeStart').onclick=()=>{
   const name = $('welcomeName').value.trim();
