@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.23';
+const APP_VERSION = '2026-11-26.24';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -486,10 +486,28 @@ function showWhyPage(){
   if(prog) prog.style.width='100%';
   whyPageTimer=setInterval(()=>{ n--; if(bar) bar.textContent = n>0 ? `⏳ Going to your money page in ${n} sec${n===1?'':'s'}…` : 'Going to your money page…'; if(prog) prog.style.width=Math.max(0,n/10*100)+'%'; if(n<=0){ clearInterval(whyPageTimer); goToMainPage(); } }, 1000);
 }
+function applyHandedness(hand){
+  document.documentElement.classList.toggle('left-handed', hand==='left');
+  localStorage.setItem('moneyProfileHandedness', hand);
+  const b=$('handBtn'); if(b) b.textContent = hand==='left' ? '🤚 Hand: Left' : '🤚 Hand: Right';
+}
+function chooseHand(hand){
+  applyHandedness(hand);
+  const fig=$('handLego'); if(fig) fig.classList.add(hand==='left'?'slide-left':'slide-right');
+  setTimeout(()=>{ $('handOverlay').hidden=true; if(fig) fig.classList.remove('slide-left','slide-right'); }, 600);
+}
 function goToMainPage(){
   clearInterval(whyPageTimer); $('whyPageOverlay').hidden=true;
   welcomeOpen=false; save(); render(); history.replaceState(null, '', location.pathname);
+  // After the countdown: show the handedness banner once, if never picked.
+  if(!localStorage.getItem('moneyProfileHandedness')) $('handOverlay').hidden=false;
 }
+$('handLeftBtn').onclick=()=>chooseHand('left');
+$('handRightBtn').onclick=()=>chooseHand('right');
+$('handLaterBtn').onclick=()=>{ $('handOverlay').hidden=true; };
+$('handBtn').onclick=()=>{ const cur=localStorage.getItem('moneyProfileHandedness')==='left'?'right':'left'; applyHandedness(cur); };
+// Apply saved handedness on load — do NOT save a default, or the banner would never show.
+(()=>{ const h=localStorage.getItem('moneyProfileHandedness'); if(h){ document.documentElement.classList.toggle('left-handed', h==='left'); const b=$('handBtn'); if(b) b.textContent = h==='left' ? '🤚 Hand: Left' : '🤚 Hand: Right'; } })();
 $('whyPageContinue').onclick=goToMainPage;
 $('welcomeStart').onclick=()=>{
   const name = $('welcomeName').value.trim();

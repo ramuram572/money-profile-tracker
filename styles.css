@@ -213,3 +213,12 @@ header.topbar{position:static}
 [data-section="quick"].collapsed>div:not(.card-head){display:none!important}
 [data-section="invest"].collapsed #investList,[data-section="invest"].collapsed #investForm,[data-section="invest"].collapsed #challengeList,[data-section="invest"].collapsed #excelBtn,[data-section="invest"].collapsed h4,[data-section="invest"].collapsed p{display:none!important}
 [data-section="why"].collapsed .why-grid{display:none!important}
+
+/* v24 handedness: left-hand mode moves controls to the left */
+html.left-handed .collapse-btn{left:10px;right:auto;width:44px;height:44px;font-size:22px}
+html.left-handed .card,html.left-handed .verdict{padding-left:56px}
+html.left-handed .top-actions{flex-direction:row-reverse}
+html.left-handed .top-actions #logoutBtn{margin-left:0;margin-right:auto}
+#handLego{transition:transform .6s ease}
+#handLego.slide-left{transform:translateX(-70px) rotate(-8deg)}
+#handLego.slide-right{transform:translateX(70px) rotate(8deg)}

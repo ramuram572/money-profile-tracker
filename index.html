@@ -15,7 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="styles.css?v=2026-11-26.23" />
+<link rel="stylesheet" href="styles.css?v=2026-11-26.24" />
 </head>
 <body>
 <!-- WELCOME / ONBOARDING -->
@@ -66,6 +66,24 @@
     <div id="whyPageCountdownBar" style="background:#dcfce7;border:2px solid #16a34a;border-radius:12px;padding:10px;text-align:center;font-weight:800;color:#14532d;font-size:18px">⏳ Going to your money page in 10 secs…</div>
     <div style="height:8px;background:#e2e8f0;border-radius:4px;margin-top:6px;overflow:hidden"><div id="whyPageProgress" style="height:100%;width:100%;background:#16a34a"></div></div>
     <button class="btn primary big" id="whyPageContinue" type="button" style="margin-top:14px">Continue to my money →</button>
+  </div>
+</div>
+
+<!-- HANDEDNESS BANNER — shown after the Why countdown, before the main page -->
+<div class="welcome-overlay" id="handOverlay" hidden>
+  <div class="welcome-card" style="max-width:480px;text-align:center">
+    <p class="muted small">Almost there — one quick pick</p>
+    <h2>Left hand or right hand?</h2>
+    <div class="lego-scene" aria-hidden="true">
+      <div class="lego-fig" id="handLego"><div class="lego-head" style="background:#fde047;border-color:#a16207"><span class="lego-eye"></span><span class="lego-eye"></span><span class="lego-smile"></span></div><div class="lego-body" style="background:#16a34a;border-color:#14532d">💰</div><div class="lego-legs"></div></div>
+    </div>
+    <p>Pick the hand you hold your phone with.<br>Your buttons will move to that side.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn primary big" id="handLeftBtn" type="button">👈 Left hand</button>
+      <button class="btn primary big" id="handRightBtn" type="button">Right hand 👉</button>
+    </div>
+    <button class="btn ghost" id="handLaterBtn" type="button" style="margin-top:10px">Ask me later</button>
+    <p class="muted small">You can change this anytime in ☰ Menu → Hand.</p>
   </div>
 </div>
 
@@ -130,6 +148,7 @@
       <button class="btn ghost" id="refreshAppBtn" type="button" title="Get the latest version, then pick a profile — your data stays safe, nothing is cleared">↻ Latest version</button>
       <button class="btn ghost" id="switchProfileBtn" type="button" title="Go back to the welcome page — use an existing profile or create a new one">👤 Switch profile</button>
       <button class="btn ghost" id="themeBtn" type="button" title="Switch light / dark theme">☀️ Light</button>
+      <button class="btn ghost" id="handBtn" type="button" title="Left hand / right hand layout">🤚 Hand: Right</button>
       <button class="btn ghost" id="expandAllBtn" type="button" title="Expand all boxes">＋ Expand all</button>
       <button class="btn ghost" id="whyBtn" type="button">✨ Why this app?</button>
       <button class="btn ghost" id="householdBtn" type="button">👨‍👩‍👧 Household</button>
@@ -376,6 +395,6 @@
 
   <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
-<script src="app.js?v=2026-11-26.23"></script>
+<script src="app.js?v=2026-11-26.24"></script>
 </body>
 </html>
