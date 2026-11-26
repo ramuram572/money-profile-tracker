@@ -337,6 +337,19 @@ $('switchProfileBtn').onclick=openProfilePicker;
 $('pickerClose').onclick=()=>{ $('profilePickerOverlay').hidden = true; };
 $('profilePickerOverlay').addEventListener('click', e=>{ if(e.target===$('profilePickerOverlay')) $('profilePickerOverlay').hidden = true; });
 $('pickerAddNew').onclick=()=>{ $('profilePickerOverlay').hidden = true; welcomeOpen=true; $('welcomeName').value=''; render(); $('welcomeName').focus(); };
+// ⎋ Logout — back to the first-time / welcome page (pick an existing profile
+// or create a new one), and disconnect Drive so the next person can't sync
+// to your Drive. Nothing is deleted: profiles stay in this browser and in Drive.
+async function doLogout(){
+  if(driveToken){ try{ await fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(driveToken), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }); }catch(e){} }
+  driveToken = null; driveFileId = null;
+  if(typeof driveSetConnected === 'function'){ driveSetConnected(false); driveSetStatus('Disconnected from Google Drive.'); }
+  $('profilePickerOverlay').hidden = true;
+  welcomeOpen = true; $('welcomeName').value=''; render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+$('logoutBtn').onclick=doLogout;
+$('pickerLogout').onclick=doLogout;
 (()=>{ const el=$('footerVersion'); if(el) el.textContent = 'Version ' + APP_VERSION + ' • Tap “↻ Latest version” at the top to get the newest app'; })();
 
 // Default month = current month
