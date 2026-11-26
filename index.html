@@ -11,6 +11,23 @@
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+<!-- WELCOME / ONBOARDING -->
+<div class="welcome-overlay" id="welcomeOverlay" hidden>
+  <div class="welcome-card">
+    <div class="welcome-graphic" aria-hidden="true">
+      <div class="coin c1">$</div><div class="coin c2">₹</div><div class="coin c3">€</div>
+      <svg viewBox="0 0 320 120" class="welcome-chart"><polyline points="10,95 70,70 130,80 190,45 250,55 310,15" fill="none" stroke="#22c55e" stroke-width="5" stroke-linecap="round"/><circle cx="310" cy="15" r="7" fill="#22c55e"/><circle cx="190" cy="45" r="5" fill="#6366f1"/><rect x="20" y="80" width="28" height="30" rx="6" fill="#6366f1"/><rect x="70" y="60" width="28" height="50" rx="6" fill="#22c55e"/><rect x="120" y="70" width="28" height="40" rx="6" fill="#6366f1"/><rect x="170" y="40" width="28" height="70" rx="6" fill="#22c55e"/><rect x="220" y="50" width="28" height="60" rx="6" fill="#6366f1"/></svg>
+    </div>
+    <h2>Welcome to your<br>Money Tracker</h2>
+    <p>Enter your money numbers once a month.<br>Watch your graphs turn green — or red.</p>
+    <label>What should we call you?
+      <input id="welcomeName" placeholder="Enter your name" autocomplete="name" maxlength="40">
+    </label>
+    <button class="btn primary big" id="welcomeStart" type="button">Start tracking →</button>
+    <p class="muted small">Your name is saved with your profile — in this browser, and in Drive when you sync — so you never have to type it again.</p>
+  </div>
+</div>
+
 <header class="topbar">
   <div class="wrap topbar-inner">
     <div class="brand">
@@ -34,10 +51,10 @@
   <!-- PROFILE -->
   <section class="card profile-card">
     <div class="profile-left">
-      <div class="avatar" id="avatarInitial">R</div>
+      <div class="avatar" id="avatarInitial">?</div>
       <div>
         <label class="field-label">Your name</label>
-        <input id="profileName" class="inline-input" value="Ram" placeholder="Your name" />
+        <input id="profileName" class="inline-input" value="" placeholder="Enter your name" />
         <p class="muted" id="profileSub">Monthly money profile • All data stays in your browser</p>
       </div>
     </div>

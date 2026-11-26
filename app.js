@@ -5,7 +5,7 @@ const EXPENSE_KEYS = [['housing','Housing'],['food','Food'],['transport','Transp
 let state = load();
 let charts = {};
 
-function load(){ try{ const d = JSON.parse(localStorage.getItem(KEY)); if(d && Array.isArray(d.entries)) return d; }catch(e){} return { profile:{name:'Ram', currency:'USD', goal:20}, entries:[] }; }
+function load(){ try{ const d = JSON.parse(localStorage.getItem(KEY)); if(d && Array.isArray(d.entries)){ if(!d.profile) d.profile={name:'',currency:'USD',goal:20}; return d; } }catch(e){} return { profile:{name:'', currency:'USD', goal:20}, entries:[] }; }
 function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
 function cur(){ return state.profile.currency === 'INR' ? '₹' : state.profile.currency === 'EUR' ? '€' : state.profile.currency === 'GBP' ? '£' : '$'; }
 function money(n){ return cur() + Math.round(Number(n)||0).toLocaleString('en-US'); }
@@ -20,7 +20,11 @@ function monthLabel(m){ const [y,mo]=m.split('-'); return new Date(+y, +mo-1, 1)
 function render(){
   const entries = sorted();
   $('profileName').value = state.profile.name || '';
-  $('avatarInitial').textContent = (state.profile.name||'R')[0].toUpperCase();
+  $('avatarInitial').textContent = state.profile.name ? state.profile.name[0].toUpperCase() : '?';
+  // Welcome onboarding: ask for their own name on first use. The name is part
+  // of state.profile, so it is saved to Drive on Sync and restored on Load —
+  // they never have to type it again on any device.
+  $('welcomeOverlay').hidden = !!state.profile.name;
   $('currency').value = state.profile.currency;
   $('savingsGoal').value = state.profile.goal;
   $('monthsCount').textContent = entries.length;
@@ -126,7 +130,7 @@ $('monthForm').addEventListener('submit', ev=>{
 $('clearFormBtn').onclick=()=>{ $('monthForm').reset(); updateLive(); };
 document.querySelectorAll('.exp, #fIncome').forEach(i=>i.addEventListener('input', updateLive));
 $('addMonthBtn').onclick=()=>{ const d=new Date(); $('fMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; $('formCard').scrollIntoView({behavior:'smooth'}); $('fIncome').focus(); };
-$('profileName').addEventListener('input', e=>{ state.profile.name=e.target.value; save(); $('avatarInitial').textContent=(e.target.value||'R')[0].toUpperCase(); });
+$('profileName').addEventListener('input', e=>{ state.profile.name=e.target.value; save(); $('avatarInitial').textContent=e.target.value ? e.target.value[0].toUpperCase() : '?'; });
 $('currency').addEventListener('change', e=>{ state.profile.currency=e.target.value; save(); render(); });
 $('savingsGoal').addEventListener('input', e=>{ state.profile.goal=parseFloat(e.target.value)||20; save(); render(); });
 $('clearAllBtn').onclick=()=>{ if(confirm('Delete ALL months? This cannot be undone.')){ state.entries=[]; save(); render(); } };
@@ -242,6 +246,14 @@ $('driveDisconnectBtn').onclick=async ()=>{
 $('driveBtn').onclick=()=>{ $('driveCard').scrollIntoView({behavior:'smooth'}); $('driveClientId').focus(); };
 $('driveClientId').addEventListener('input', e=>localStorage.setItem('moneyProfileDriveClientId', e.target.value.trim()));
 (()=>{ const savedId = localStorage.getItem('moneyProfileDriveClientId') || DEFAULT_DRIVE_CLIENT_ID; if(savedId) $('driveClientId').value = savedId; const last = localStorage.getItem('moneyProfileDriveLastSync'); if(last) $('driveLast').textContent = 'Last synced: ' + last; })();
+
+$('welcomeStart').onclick=()=>{
+  const name = $('welcomeName').value.trim();
+  if(!name){ $('welcomeName').focus(); $('welcomeName').placeholder = 'Please enter your name to continue'; return; }
+  state.profile.name = name; save(); render();
+  if(driveToken) driveSyncTo(); // save the name to Drive right away if already connected
+};
+$('welcomeName').addEventListener('keydown', e=>{ if(e.key==='Enter') $('welcomeStart').click(); });
 
 // Default month = current month
 (()=>{ const d=new Date(); $('fMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render(); updateLive(); })();
