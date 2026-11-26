@@ -163,6 +163,14 @@ const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const DEFAULT_DRIVE_CLIENT_ID = '534758056260-pmr6hlip5st33imtkqd38fgrt69gmq99.apps.googleusercontent.com';
 let driveToken = null, driveFileId = null, driveClient = null;
 function driveSetStatus(t){ $('driveStatus').textContent = t; }
+function driveSetConnected(connected){
+  $('driveSyncBtn').disabled = !connected;
+  $('driveLoadBtn').disabled = !connected;
+  $('driveDisconnectBtn').disabled = !connected;
+  $('driveConnectBtn').disabled = connected;
+  $('driveConnectBtn').textContent = connected ? '● Connected' : 'Connect Drive';
+  $('driveStatus').className = connected ? 'muted green-text' : 'muted';
+}
 function driveClientId(){ return ($('driveClientId').value || '').trim(); }
 function driveInit(){
   const id = driveClientId();
@@ -170,7 +178,7 @@ function driveInit(){
   localStorage.setItem('moneyProfileDriveClientId', id);
   if(typeof google === 'undefined' || !google.accounts){ alert('Google sign-in library did not load. Check your connection and reload.'); return false; }
   driveClient = google.accounts.oauth2.initTokenClient({ client_id: id, scope: DRIVE_SCOPE,
-    callback: (resp)=>{ if(resp.access_token){ driveToken = resp.access_token; driveSetStatus('Connected to Google Drive. Tap “Sync now” to save, or “Load from Drive” on a new device.'); $('driveSyncBtn').disabled = false; $('driveLoadBtn').disabled = false; } else driveSetStatus('Drive sign-in failed — try Connect again.'); } });
+    callback: (resp)=>{ if(resp.access_token){ driveToken = resp.access_token; driveSetConnected(true); driveSetStatus('● Connected to Google Drive. Tap “Sync now” to save, or “Load from Drive” on a new device.'); } else driveSetStatus('Drive sign-in failed — try Connect again.'); } });
   return true;
 }
 async function driveApi(path, opts={}){
@@ -225,6 +233,12 @@ async function driveLoadFrom(){
 $('driveConnectBtn').onclick=()=>{ if(driveInit()) driveClient.requestAccessToken(); };
 $('driveSyncBtn').onclick=driveSyncTo;
 $('driveLoadBtn').onclick=driveLoadFrom;
+$('driveDisconnectBtn').onclick=async ()=>{
+  if(driveToken){ try{ await fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(driveToken), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }); }catch(e){ /* token expires on its own — disconnect locally anyway */ } }
+  driveToken = null; driveFileId = null;
+  driveSetConnected(false);
+  driveSetStatus('Disconnected from Google Drive. Your data stays safe in Drive as money-profile.json, and in this browser — nothing was deleted. Tap Connect Drive to sync again.');
+};
 $('driveBtn').onclick=()=>{ $('driveCard').scrollIntoView({behavior:'smooth'}); $('driveClientId').focus(); };
 $('driveClientId').addEventListener('input', e=>localStorage.setItem('moneyProfileDriveClientId', e.target.value.trim()));
 (()=>{ const savedId = localStorage.getItem('moneyProfileDriveClientId') || DEFAULT_DRIVE_CLIENT_ID; if(savedId) $('driveClientId').value = savedId; const last = localStorage.getItem('moneyProfileDriveLastSync'); if(last) $('driveLast').textContent = 'Last synced: ' + last; })();
