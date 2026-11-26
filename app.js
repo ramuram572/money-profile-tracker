@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.10';
+const APP_VERSION = '2026-11-26.11';
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
 const EXPENSE_KEYS = [['housing','Housing'],['food','Food'],['transport','Transport'],['subs','Subscriptions'],['shopping','Shopping'],['fun','Fun / Eating out'],['health','Health'],['other','Other']];
@@ -524,6 +524,18 @@ $('shareBtn').onclick=async ()=>{
 };
 // PDF report — print view, save as PDF from the print dialog
 $('pdfBtn').onclick=()=>window.print();
+
+// Expand all / Collapse all — on top, saves the state per profile like the
+// individual + / − buttons do, so it comes back the same next login.
+const ALL_SECTIONS = ['profile','drive','verdict','insights','goals','share','chart-income','chart-networth','chart-breakdown','chart-savings','form','history'];
+function setAllCollapsed(collapsed){
+  const p=prof(); if(!p) return;
+  if(!p.uiCollapsed) p.uiCollapsed={};
+  ALL_SECTIONS.forEach(s=>p.uiCollapsed[s]=collapsed);
+  save(); applyCollapse();
+}
+$('expandAllBtn').onclick=()=>setAllCollapsed(false);
+$('collapseAllBtn').onclick=()=>setAllCollapsed(true);
 
 // Inject a + / − button into any box that doesn't have one yet (chart cards)
 document.querySelectorAll('[data-section]').forEach(sec=>{
