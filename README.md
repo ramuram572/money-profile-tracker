@@ -39,8 +39,8 @@ The app uses Google Identity Services with the `drive.file` scope — it can onl
 5. Under **Authorized JavaScript origins**, add exactly: `https://ramuram572.github.io`
    (For local testing also add `http://localhost:8000` if you use it.)
 6. Create → copy the **Client ID** (ends in `.apps.googleusercontent.com`). The Client Secret is not needed — do not paste it anywhere.
-7. Open the live app, go to **Google Drive sync**, paste the Client ID, tap **Connect Drive**, sign in with your Google account, and allow Drive access.
-8. Tap **↑ Sync now — save to Drive**. On another device, open the app, paste the same Client ID, Connect Drive with the same Google account, tap **↓ Load from Drive**.
+7. Open the live app, go to **Google Drive sync** — the Client ID is already filled in for the "Money Profile" project (money-profile-515919). Tap **Connect Drive**, sign in with ramu.edala@gmail.com, and allow Drive access.
+8. Tap **↑ Sync now — save to Drive**. On another device, open the app, Connect Drive with the same Google account, tap **↓ Load from Drive**.
 
 If Google shows "unverified app" while testing, tap Advanced → Go to Money Profile — that's normal until the app is verified, and it only affects you.
 

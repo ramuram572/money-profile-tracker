@@ -157,6 +157,10 @@ $('sampleBtn').onclick=()=>{
 // it is saved only in this browser's localStorage, never in the repo.
 const DRIVE_FILE = 'money-profile.json';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+// OAuth Client ID for the "Money Profile" Google Cloud project (money-profile-515919),
+// created 2026-11-26. A Client ID is a public identifier, not a secret — it is
+// origin-restricted to https://ramuram572.github.io, and the Client Secret is never used here.
+const DEFAULT_DRIVE_CLIENT_ID = '534758056260-pmr6hlip5st33imtkqd38fgrt69gmq99.apps.googleusercontent.com';
 let driveToken = null, driveFileId = null, driveClient = null;
 function driveSetStatus(t){ $('driveStatus').textContent = t; }
 function driveClientId(){ return ($('driveClientId').value || '').trim(); }
@@ -223,7 +227,7 @@ $('driveSyncBtn').onclick=driveSyncTo;
 $('driveLoadBtn').onclick=driveLoadFrom;
 $('driveBtn').onclick=()=>{ $('driveCard').scrollIntoView({behavior:'smooth'}); $('driveClientId').focus(); };
 $('driveClientId').addEventListener('input', e=>localStorage.setItem('moneyProfileDriveClientId', e.target.value.trim()));
-(()=>{ const savedId = localStorage.getItem('moneyProfileDriveClientId'); if(savedId) $('driveClientId').value = savedId; const last = localStorage.getItem('moneyProfileDriveLastSync'); if(last) $('driveLast').textContent = 'Last synced: ' + last; })();
+(()=>{ const savedId = localStorage.getItem('moneyProfileDriveClientId') || DEFAULT_DRIVE_CLIENT_ID; if(savedId) $('driveClientId').value = savedId; const last = localStorage.getItem('moneyProfileDriveLastSync'); if(last) $('driveLast').textContent = 'Last synced: ' + last; })();
 
 // Default month = current month
 (()=>{ const d=new Date(); $('fMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render(); updateLive(); })();
