@@ -53,17 +53,18 @@ main{padding:26px 0 40px}
 .collapse-btn{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#0b1526;color:var(--text);font-size:18px;font-weight:900;line-height:1;cursor:pointer;z-index:5}
 html[data-theme="light"] .collapse-btn{background:#f1f5f9;color:#0f172a}
 .card,.verdict{position:relative}
-[data-section].collapsed>:not(.card-head):not(.collapse-btn):not(#profileSummary):not(.verdict-icon):not(.verdict-body){display:none!important}
-[data-section="insights"].collapsed .card-head,[data-section="goals"].collapsed .card-head,[data-section="history"].collapsed .card-head{display:flex!important}
+/* Collapsed = hide the body, ALWAYS keep the title / summary visible.
+   Explicit per-box rules only — no generic hide-all rule, which was
+   hiding titles and leaving empty boxes. */
 [data-section="profile"].collapsed .profile-left,[data-section="profile"].collapsed .profile-fields{display:none}
-[data-section="verdict"].collapsed .verdict-body{display:block!important}
-[data-section="verdict"].collapsed #verdictText,[data-section="verdict"].collapsed .verdict-score{display:none!important}
-[data-section="share"].collapsed .drive-actions{display:none!important}
-[data-section="share"].collapsed>div:first-of-type{display:block!important}
 [data-section="profile"].collapsed{padding:12px 16px}
-[data-section="form"].collapsed form{display:none}
-[data-section="form"].collapsed h3{display:block!important;margin:0}
-[data-section="form"].collapsed>:not(.collapse-btn):not(h3){display:none!important}
+[data-section="verdict"].collapsed #verdictText,[data-section="verdict"].collapsed .verdict-score{display:none!important}
+[data-section="insights"].collapsed .insight-text,[data-section="insights"].collapsed #insightTip,[data-section="insights"].collapsed .badge-row{display:none!important}
+[data-section="goals"].collapsed .goal-list,[data-section="goals"].collapsed .goal-form,[data-section="goals"].collapsed h4,[data-section="goals"].collapsed p,[data-section="goals"].collapsed .budget-list{display:none!important}
+[data-section="share"].collapsed .drive-actions{display:none!important}
+[data-section="form"].collapsed form,[data-section="form"].collapsed p{display:none!important}
+[data-section="history"].collapsed .table-wrap,[data-section="history"].collapsed p{display:none!important}
+[data-section^="chart-"].collapsed .chart-box,[data-section^="chart-"].collapsed .legend,[data-section^="chart-"].collapsed .networth-note{display:none!important}
 [data-section="drive"].collapsed .drive-fields,[data-section="drive"].collapsed .drive-left{display:none!important}
 [data-section="drive"].collapsed #driveCollapsedBar{display:flex!important}
 .profile-summary{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:linear-gradient(90deg,#14532d,#312e81);border-radius:12px;padding:10px 14px;color:#fff}
