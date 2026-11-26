@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.29';
+const APP_VERSION = '2026-11-26.30';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -499,20 +499,24 @@ function chooseHand(hand){
   // Chosen one smiles and walks off in its direction; the other turns sad and walks the other way.
   if(chosen){ chosen.querySelector('.lego-mouth').className='lego-mouth smile'; chosen.classList.add(hand==='left'?'walk-left':'walk-right'); }
   if(other){ other.querySelector('.lego-mouth').className='lego-mouth sad'; other.classList.add(hand==='left'?'walk-right':'walk-left'); }
-  setTimeout(()=>{ $('handOverlay').hidden=true; [left,right].forEach(f=>{ if(!f) return; f.classList.remove('walk-left','walk-right'); f.querySelector('.lego-mouth').className='lego-mouth smile'; }); }, 1400);
+  setTimeout(()=>{ $('handOverlay').hidden=true; [left,right].forEach(f=>{ if(!f) return; f.classList.remove('walk-left','walk-right'); f.querySelector('.lego-mouth').className='lego-mouth smile'; }); welcomeOpen=false; save(); render(); history.replaceState(null, '', location.pathname); }, 1400);
+}
+function goToHandPage(){
+  clearInterval(whyPageTimer); $('whyPageOverlay').hidden=true;
+  $('handOverlay').hidden=false; // Page 3 — full hand-select page, main (Page 4) not shown yet
 }
 function goToMainPage(){
   clearInterval(whyPageTimer); $('whyPageOverlay').hidden=true;
+  // Page 3 after the countdown: hand-select page first, if never picked.
+  if(!localStorage.getItem('moneyProfileHandedness') && localStorage.getItem('moneyProfileHandAsked')!=='never') return goToHandPage();
   welcomeOpen=false; save(); render(); history.replaceState(null, '', location.pathname);
-  // After the countdown: show the handedness banner once, if never picked.
-  if(!localStorage.getItem('moneyProfileHandedness') && localStorage.getItem('moneyProfileHandAsked')!=='never') $('handOverlay').hidden=false;
 }
 $('handLeftBtn').onclick=()=>chooseHand('left');
 if($('handLegoLeft')) $('handLegoLeft').onclick=()=>chooseHand('left');
 if($('handLegoRight')) $('handLegoRight').onclick=()=>chooseHand('right');
 $('handRightBtn').onclick=()=>chooseHand('right');
-$('handLaterBtn').onclick=()=>{ $('handOverlay').hidden=true; };
-$('handNeverBtn').onclick=()=>{ localStorage.setItem('moneyProfileHandAsked','never'); $('handOverlay').hidden=true; };
+$('handLaterBtn').onclick=()=>{ $('handOverlay').hidden=true; welcomeOpen=false; save(); render(); history.replaceState(null, '', location.pathname); };
+$('handNeverBtn').onclick=()=>{ localStorage.setItem('moneyProfileHandAsked','never'); $('handOverlay').hidden=true; welcomeOpen=false; save(); render(); history.replaceState(null, '', location.pathname); };
 $('handBtn').onclick=()=>{ const cur=localStorage.getItem('moneyProfileHandedness')==='left'?'right':'left'; applyHandedness(cur); };
 // Apply saved handedness on load — do NOT save a default, or the banner would never show.
 (()=>{ const h=localStorage.getItem('moneyProfileHandedness'); if(h){ document.documentElement.classList.toggle('left-handed', h==='left'); const b=$('handBtn'); if(b) b.textContent = h==='left' ? '🤚 Hand: Left' : '🤚 Hand: Right'; const pill=$('handPill'); if(pill) pill.textContent = h==='left' ? '🤚 Left' : '🤚 Right'; } })();
