@@ -15,7 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="styles.css?v=2026-11-26.18" />
+<link rel="stylesheet" href="styles.css?v=2026-11-26.19" />
 </head>
 <body>
 <!-- WELCOME / ONBOARDING -->
@@ -52,7 +52,7 @@
 <div class="welcome-overlay" id="whyOverlay" hidden>
   <div class="welcome-card" style="max-width:560px;text-align:left">
     <h2>Why Money Profile? <button class="btn ghost small" data-close-modal="whyOverlay" type="button" style="float:right">✕</button></h2>
-    <p class="muted small" id="whyCountdown" style="text-align:center">⏳ Closing in 30 secs…</p>
+    <div id="whyCountdownBar" style="background:#dcfce7;border:2px solid #16a34a;border-radius:12px;padding:10px;text-align:center;font-weight:800;color:#14532d;font-size:18px">⏳ Closing in 30 secs…</div><div style="height:8px;background:#e2e8f0;border-radius:4px;margin-top:6px;overflow:hidden"><div id="whyProgress" style="height:100%;width:100%;background:#16a34a"></div></div><p class="muted small" id="whyCountdown" hidden>⏳ Closing in 30 secs…</p>
     <p>✅ <strong>One entry a month.</strong> No daily tracking, no burnout — enter once after payday.</p>
     <p>💬 <strong>Plain English, not spreadsheets.</strong> "You kept $1,200 — your best yet" plus a tip.</p>
     <p>🔒 <strong>Private by design.</strong> No account, no ads, no selling your data. Numbers live in your browser and your own Drive file.</p>
@@ -126,6 +126,7 @@
   <!-- WHY THIS APP — on the main page -->
   <section class="card why-card" data-section="why">
     <div class="card-head"><div><h3>✨ Why Money Profile?</h3><p>One entry a month. Your money, in plain English.</p></div><button class="collapse-btn" data-collapse="why" type="button">−</button></div>
+    <button class="btn primary" id="whyCardBtn" type="button" style="margin-bottom:12px">✨ See Why — popup (auto-closes in 30 secs)</button>
     <div class="why-grid">
       <div>✅ <strong>One entry a month</strong><br><span class="muted small">No daily tracking, no burnout.</span></div>
       <div>💬 <strong>Plain English</strong><br><span class="muted small">"You kept $1,200 — your best yet."</span></div>
@@ -367,6 +368,6 @@
 
   <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
-<script src="app.js?v=2026-11-26.18"></script>
+<script src="app.js?v=2026-11-26.19"></script>
 </body>
 </html>
