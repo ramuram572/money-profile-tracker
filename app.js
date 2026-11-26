@@ -5,7 +5,10 @@ const $ = id => document.getElementById(id);
 const EXPENSE_KEYS = [['housing','Housing'],['food','Food'],['transport','Transport'],['subs','Subscriptions'],['shopping','Shopping'],['fun','Fun / Eating out'],['health','Health'],['other','Other']];
 let state = load();
 let charts = {};
-let welcomeOpen = state.profiles.length === 0;
+// First-time page: show the welcome chooser when there is no profile yet,
+// OR when the page was opened with ?welcome=1 (e.g. after tapping
+// "↻ Latest version" — that button always lands on the chooser).
+let welcomeOpen = state.profiles.length === 0 || new URLSearchParams(location.search).get('welcome') === '1';
 
 function load(){
   try{
@@ -297,22 +300,29 @@ $('welcomeStart').onclick=()=>{
     state.profiles.push(p); state.currentProfileId = p.id;
   }
   welcomeOpen = false; save(); render();
+  history.replaceState(null, '', location.pathname);
   if(driveToken) driveSyncTo(); // save the name to Drive right away if already connected
 };
 $('welcomeUseExisting').onclick=()=>{
   state.currentProfileId = $('welcomeProfileSelect').value;
   welcomeOpen = false; save(); render();
+  history.replaceState(null, '', location.pathname);
 };
 $('welcomeName').addEventListener('keydown', e=>{ if(e.key==='Enter') $('welcomeStart').click(); });
 
-// ↻ Latest version — get the newest app code without clearing cookies or data.
-// localStorage (your profiles/months) survives a reload; this just busts the
-// browser cache so GitHub Pages serves the latest index.html / app.js / styles.css.
+// ↻ Latest version — get the newest app code without clearing cookies or data,
+// then land on the first-time / welcome page, where you pick an existing
+// profile or create a new one. localStorage (your profiles/months) survives
+// a reload; this just busts the browser cache so GitHub Pages serves the
+// latest index.html / app.js / styles.css.
 $('refreshAppBtn').onclick=async ()=>{
   const btn = $('refreshAppBtn'); btn.disabled = true; btn.textContent = '↻ Checking…';
   try{ await fetch(location.href.split('?')[0], { cache:'no-store' }); }catch(e){ /* offline — reload anyway */ }
-  location.href = location.pathname + '?v=' + Date.now();
+  location.href = location.pathname + '?v=' + Date.now() + '&welcome=1';
 };
+// 👤 Switch profile — on the main page, open the same first-time chooser
+// (use an existing profile, or create a new one) without reloading.
+$('switchProfileBtn').onclick=()=>{ welcomeOpen=true; $('welcomeName').value=''; render(); window.scrollTo({top:0, behavior:'smooth'}); };
 (()=>{ const el=$('footerVersion'); if(el) el.textContent = 'Version ' + APP_VERSION + ' • Tap “↻ Latest version” at the top to get the newest app'; })();
 
 // Default month = current month
