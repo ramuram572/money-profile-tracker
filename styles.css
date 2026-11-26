@@ -215,10 +215,15 @@ header.topbar{position:static}
 [data-section="why"].collapsed .why-grid{display:none!important}
 
 /* v24 handedness: left-hand mode moves controls to the left */
+#logoutBtn{margin-left:auto}
 html.left-handed .collapse-btn{left:10px;right:auto;width:44px;height:44px;font-size:22px}
-html.left-handed .card,html.left-handed .verdict{padding-left:56px}
-html.left-handed .top-actions{flex-direction:row-reverse}
-html.left-handed .top-actions #logoutBtn{margin-left:0;margin-right:auto}
+html.left-handed .card,html.left-handed .verdict{padding-left:56px;padding-right:16px}
+html.left-handed .card-head{padding-left:48px;padding-right:12px}
+html.left-handed #logoutBtn{margin-left:0;margin-right:auto;order:-3}
+html.left-handed #sampleBtn{order:-2}
+html.left-handed #menuBtn{order:100}
+html.left-handed .drive-collapsed{flex-direction:row-reverse}
+html.left-handed [data-close-modal]{float:left}
 #handLego{transition:transform .6s ease}
 #handLego.slide-left{transform:translateX(-70px) rotate(-8deg)}
 #handLego.slide-right{transform:translateX(70px) rotate(8deg)}
