@@ -238,3 +238,13 @@ html.left-handed [data-close-modal]{float:left}
 @keyframes walkRight{0%{transform:translateX(0);opacity:1}70%{opacity:1}100%{transform:translateX(160px) translateY(4px);opacity:0}}
 .hand-fig.walk-left{animation:walkLeft 1.2s ease-in forwards}
 .hand-fig.walk-right{animation:walkRight 1.2s ease-in forwards}
+
+/* v27 should-fix + nice-to-have */
+html.left-handed .topbar-inner{flex-direction:row-reverse}
+html.left-handed #handBtn{order:2}
+html.left-handed #topActions .btn{order:1}
+html.left-handed .goal-top,html.left-handed .picker-item{flex-direction:row-reverse}
+html:not(.left-handed) .form-card .btn.primary{float:right}
+html.left-handed .form-card .btn.primary{float:left}
+@keyframes walkLeft{0%{transform:translateX(0);opacity:1}70%{opacity:1}100%{transform:translateX(-35vw) translateY(4px);opacity:0}}
+@keyframes walkRight{0%{transform:translateX(0);opacity:1}70%{opacity:1}100%{transform:translateX(35vw) translateY(4px);opacity:0}}

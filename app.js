@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.26';
+const APP_VERSION = '2026-11-26.27';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -490,6 +490,7 @@ function applyHandedness(hand){
   document.documentElement.classList.toggle('left-handed', hand==='left');
   localStorage.setItem('moneyProfileHandedness', hand);
   const b=$('handBtn'); if(b) b.textContent = hand==='left' ? '🤚 Hand: Left' : '🤚 Hand: Right';
+  const pill=$('handPill'); if(pill) pill.textContent = hand==='left' ? '🤚 Left' : '🤚 Right';
 }
 function chooseHand(hand){
   applyHandedness(hand);
@@ -504,16 +505,17 @@ function goToMainPage(){
   clearInterval(whyPageTimer); $('whyPageOverlay').hidden=true;
   welcomeOpen=false; save(); render(); history.replaceState(null, '', location.pathname);
   // After the countdown: show the handedness banner once, if never picked.
-  if(!localStorage.getItem('moneyProfileHandedness')) $('handOverlay').hidden=false;
+  if(!localStorage.getItem('moneyProfileHandedness') && localStorage.getItem('moneyProfileHandAsked')!=='never') $('handOverlay').hidden=false;
 }
 $('handLeftBtn').onclick=()=>chooseHand('left');
 if($('handLegoLeft')) $('handLegoLeft').onclick=()=>chooseHand('left');
 if($('handLegoRight')) $('handLegoRight').onclick=()=>chooseHand('right');
 $('handRightBtn').onclick=()=>chooseHand('right');
 $('handLaterBtn').onclick=()=>{ $('handOverlay').hidden=true; };
+$('handNeverBtn').onclick=()=>{ localStorage.setItem('moneyProfileHandAsked','never'); $('handOverlay').hidden=true; };
 $('handBtn').onclick=()=>{ const cur=localStorage.getItem('moneyProfileHandedness')==='left'?'right':'left'; applyHandedness(cur); };
 // Apply saved handedness on load — do NOT save a default, or the banner would never show.
-(()=>{ const h=localStorage.getItem('moneyProfileHandedness'); if(h){ document.documentElement.classList.toggle('left-handed', h==='left'); const b=$('handBtn'); if(b) b.textContent = h==='left' ? '🤚 Hand: Left' : '🤚 Hand: Right'; } })();
+(()=>{ const h=localStorage.getItem('moneyProfileHandedness'); if(h){ document.documentElement.classList.toggle('left-handed', h==='left'); const b=$('handBtn'); if(b) b.textContent = h==='left' ? '🤚 Hand: Left' : '🤚 Hand: Right'; const pill=$('handPill'); if(pill) pill.textContent = h==='left' ? '🤚 Left' : '🤚 Right'; } })();
 $('whyPageContinue').onclick=goToMainPage;
 $('welcomeStart').onclick=()=>{
   const name = $('welcomeName').value.trim();
