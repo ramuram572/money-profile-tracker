@@ -207,3 +207,9 @@ header.topbar{position:static}
 .why-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:640px){.why-grid{grid-template-columns:1fr}}
 .why-card{border:2px solid #bbf7d0}
+
+/* v18 fix: Quick expense + Investments + Why had NO collapse rules, so − did nothing */
+[data-section="quick"].collapsed #quickForm,[data-section="quick"].collapsed #billList,[data-section="quick"].collapsed #billForm,[data-section="quick"].collapsed #suggestBudgetBtn,[data-section="quick"].collapsed #receiptNote,[data-section="quick"].collapsed h4{display:none!important}
+[data-section="quick"].collapsed>div:not(.card-head){display:none!important}
+[data-section="invest"].collapsed #investList,[data-section="invest"].collapsed #investForm,[data-section="invest"].collapsed #challengeList,[data-section="invest"].collapsed #excelBtn,[data-section="invest"].collapsed h4,[data-section="invest"].collapsed p{display:none!important}
+[data-section="why"].collapsed .why-grid{display:none!important}
