@@ -1,0 +1,8 @@
+# Never commit money data or secrets
+money-profile.json
+*.env
+.env
+*.pem
+*.key
+node_modules/
+.DS_Store
