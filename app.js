@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.34';
+const APP_VERSION = '2026-11-26.35';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -649,6 +649,7 @@ document.querySelectorAll('[data-section]').forEach(sec=>{
 $('driveExpandBtn').onclick=()=>{ const p=prof(); if(p){ if(!p.uiCollapsed) p.uiCollapsed={}; p.uiCollapsed.drive=false; save(); applyCollapse(); } };
 
 $('menuBtn').onclick=()=>{ document.documentElement.classList.toggle('menu-open'); };
+document.querySelectorAll('#topActions .btn').forEach(b=>b.addEventListener('click',()=>{ document.documentElement.classList.remove('menu-open'); }));
 document.querySelectorAll('[data-close-modal]').forEach(b=>b.onclick=()=>{ $(b.dataset.closeModal).hidden=true; });
 // Why / Household / Year in review
 let whyTimer=null;

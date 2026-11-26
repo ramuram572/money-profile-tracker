@@ -260,8 +260,16 @@ html.left-handed .card-head .pill{flex-shrink:0}
 
 /* v33 left-hand menu: real dropdown panel, not a sideways-scrolling row */
 #topActions{display:none}
-html.menu-open #topActions{display:contents}
-html.left-handed.menu-open #topActions{display:flex;flex-direction:column;position:fixed;inset:0;background:var(--bg);padding:90px 20px 30px;overflow-y:auto;z-index:100;gap:10px}
-html.left-handed.menu-open #topActions::before{content:"Menu — tap ☰ again to close";position:fixed;top:20px;left:20px;font-weight:800;font-size:18px}
+
 html.left-handed.menu-open #topActions .btn{width:100%;text-align:left;justify-content:flex-start}
 html[data-theme="light"].left-handed.menu-open #topActions{background:#fff}
+
+/* v35 one menu for both hands: same panel, anchored to the hand's side */
+#topActions{display:none}
+html.menu-open #topActions{display:flex;flex-direction:column;position:fixed;top:84px;left:12px;width:280px;max-width:calc(100vw - 24px);max-height:calc(100vh - 110px);overflow-y:auto;background:#111a2e;border:1px solid var(--line);border-radius:16px;padding:10px;box-shadow:0 16px 40px rgba(0,0,0,.5);z-index:100;gap:8px}
+html.menu-open #topActions .btn{width:100%;text-align:left}
+html.left-handed.menu-open #topActions{left:auto;right:12px}
+html[data-theme="light"].menu-open #topActions{background:#fff}
+html.left-handed .top-actions{flex-wrap:wrap}
+/* Why / Household / Year modals: never clip at the right edge */
+.modal-card,.welcome-card{max-width:calc(100vw - 32px)}
