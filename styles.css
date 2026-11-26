@@ -266,8 +266,9 @@ html[data-theme="light"].left-handed.menu-open #topActions{background:#fff}
 
 /* v35 one menu for both hands: same panel, anchored to the hand's side */
 #topActions{display:none}
-html.menu-open #topActions{display:flex;flex-direction:column;position:fixed;left:0;right:0;bottom:0;top:auto;width:100%;max-width:100%;max-height:75vh;overflow-y:auto;background:#111a2e;border:1px solid var(--line);border-bottom:none;border-radius:20px 20px 0 0;padding:16px 16px 28px;box-shadow:0 -16px 40px rgba(0,0,0,.5);z-index:100;gap:8px}
-html.menu-open #topActions::before{content:"—  Menu  —";text-align:center;color:var(--muted);font-weight:800;font-size:13px;padding-bottom:4px}
+/* v40 menu: in-place collapse/expand list, same for Left and Right — no floating sheet, no scrolling behind */
+html.menu-open #topActions{display:flex;flex-direction:column;position:static;width:100%;max-width:1180px;margin:0 auto;padding:12px 20px 16px;background:var(--card);border-bottom:1px solid var(--line);gap:8px}
+html.menu-open #topActions .btn{width:100%;text-align:left}
 html.menu-open #topActions .btn{width:100%;text-align:left}
 html[data-theme="light"].menu-open #topActions{background:#fff}
 html.left-handed .top-actions{flex-wrap:wrap}
