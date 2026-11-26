@@ -257,3 +257,10 @@ html.left-handed #menuBtn{order:100;margin-left:auto}
 body{overflow-x:hidden}
 .card,.stats,.charts{max-width:100%}
 html.left-handed .card-head .pill{flex-shrink:0}
+
+/* v33 left-hand menu: real dropdown panel, not a sideways-scrolling row */
+#topActions{display:none}
+html.menu-open #topActions{display:contents}
+html.left-handed.menu-open #topActions{display:flex;flex-direction:column;position:absolute;right:12px;top:calc(100% - 6px);width:270px;max-height:70vh;overflow-y:auto;background:#111a2e;border:1px solid var(--line);border-radius:16px;padding:10px;box-shadow:0 16px 40px rgba(0,0,0,.5);z-index:30;gap:8px}
+html.left-handed.menu-open #topActions .btn{width:100%;text-align:left;justify-content:flex-start}
+html[data-theme="light"].left-handed.menu-open #topActions{background:#fff}
