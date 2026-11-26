@@ -1,5 +1,6 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.12';
+const APP_VERSION = '2026-11-26.13';
+const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
 const EXPENSE_KEYS = [['housing','Housing'],['food','Food'],['transport','Transport'],['subs','Subscriptions'],['shopping','Shopping'],['fun','Fun / Eating out'],['health','Health'],['other','Other']];
@@ -10,9 +11,28 @@ let charts = {};
 // "↻ Latest version" — that button always lands on the chooser).
 let welcomeOpen = state.profiles.length === 0 || new URLSearchParams(location.search).get('welcome') === '1' || new URLSearchParams(location.search).has('v');
 
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function numVal(v){ const n=Number(v); return Number.isFinite(n)?n:0; }
+function validateState(d){
+  if(!d || !Array.isArray(d.profiles)) return null;
+  d.profiles.forEach((pr,i)=>{
+    if(!pr.id) pr.id='p'+(i+1); pr.name=String(pr.name||'').slice(0,40);
+    pr.currency=['USD','INR','EUR','GBP'].includes(pr.currency)?pr.currency:'USD'; pr.goal=numVal(pr.goal)||20;
+    if(!Array.isArray(pr.entries)) pr.entries=[];
+    pr.entries=pr.entries.filter(e=>e && typeof e.month==='string').map(e=>({month:e.month, income:Math.max(0,numVal(e.income)), saved:Math.max(0,numVal(e.saved)), assets:Math.max(0,numVal(e.assets)), debts:Math.max(0,numVal(e.debts)), expenses:Object.fromEntries(EXPENSE_KEYS.map(([k])=>[k,Math.max(0,numVal(e.expenses&&e.expenses[k]))]))}));
+    if(!Array.isArray(pr.goals)) pr.goals=[]; pr.goals=pr.goals.map(g=>({id:g.id||('g'+Date.now()), name:String(g.name||'').slice(0,40), target:Math.max(0,numVal(g.target)), saved:Math.max(0,numVal(g.saved))}));
+    if(!pr.budgets||typeof pr.budgets!=='object') pr.budgets={}; if(!pr.uiCollapsed||typeof pr.uiCollapsed!=='object') pr.uiCollapsed={};
+    if(!Array.isArray(pr.bills)) pr.bills=[]; if(!Array.isArray(pr.investments)) pr.investments=[]; if(!Array.isArray(pr.challenges)) pr.challenges=[];
+  });
+  if(!d.currentProfileId || !d.profiles.find(x=>x.id===d.currentProfileId)) d.currentProfileId=d.profiles[0]?d.profiles[0].id:null;
+  d.schemaVersion=SCHEMA_VERSION; return d;
+}
 function load(){
   try{
-    const d = JSON.parse(localStorage.getItem(KEY));
+    let raw=localStorage.getItem(KEY);
+    let d=null;
+    try{ d=JSON.parse(raw); }catch(e){ const b=localStorage.getItem(KEY+'.backup'); if(b){ try{ d=JSON.parse(b); }catch(_){} } }
+    if(d && Array.isArray(d.profiles)){ const v=validateState(d); if(v) return v; }
     if(d && Array.isArray(d.profiles)){
       d.profiles.forEach((p,i)=>{ if(!p.id) p.id='p'+(i+1); if(!Array.isArray(p.entries)) p.entries=[]; if(!p.currency) p.currency='USD'; if(p.goal==null) p.goal=20; if(!Array.isArray(p.goals)) p.goals=[]; if(!p.budgets) p.budgets={}; if(!p.uiCollapsed) p.uiCollapsed={}; if(!Array.isArray(p.bills)) p.bills=[]; if(!Array.isArray(p.investments)) p.investments=[]; if(!Array.isArray(p.challenges)) p.challenges=[]; });
       if(!d.currentProfileId || !d.profiles.find(p=>p.id===d.currentProfileId)) d.currentProfileId = d.profiles[0] ? d.profiles[0].id : null;
@@ -27,7 +47,7 @@ function load(){
   }catch(e){}
   return { profiles:[], currentProfileId:null };
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+function save(){ try{ const prev=localStorage.getItem(KEY); if(prev) localStorage.setItem(KEY+'.backup', prev); state.schemaVersion=SCHEMA_VERSION; state.updatedAt=new Date().toISOString(); localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ try{ localStorage.setItem(KEY+'.backup', JSON.stringify(state)); }catch(_){} alert('Could not save — browser storage is full or blocked. Export your data (Export JSON) as a backup.'); } }
 function prof(){ return state.profiles.find(p=>p.id===state.currentProfileId) || state.profiles[0] || null; }
 function cur(){ const p=prof(); const c=p?p.currency:'USD'; return c === 'INR' ? '₹' : c === 'EUR' ? '€' : c === 'GBP' ? '£' : '$'; }
 function money(n){ return cur() + Math.round(Number(n)||0).toLocaleString('en-US'); }
@@ -376,6 +396,7 @@ function driveInit(){
 }
 async function driveApi(path, opts={}){
   const r = await fetch('https://www.googleapis.com' + path, { ...opts, headers: { Authorization: 'Bearer ' + driveToken, ...(opts.headers||{}) } });
+  if(r.status===401){ driveToken=null; driveSetConnected(false); throw new Error('Drive session expired — tap Connect Drive again.'); }
   if(!r.ok) throw new Error('Drive request failed: ' + r.status);
   return r;
 }
@@ -390,6 +411,10 @@ async function driveSyncTo(){
   const body = JSON.stringify(state, null, 2);
   try{
     const existing = driveFileId ? { id: driveFileId } : await driveFindFile();
+    if(existing && existing.modifiedTime){
+      const lastSync=localStorage.getItem('moneyProfileDriveLastSyncISO');
+      if(lastSync && new Date(existing.modifiedTime) > new Date(lastSync) && !confirm('Drive has a newer copy (modified '+existing.modifiedTime+') than your last sync. Overwrite Drive with this device\'s data? Cancel to Load from Drive first.')){ driveSetStatus('Sync cancelled — Load from Drive first if you want the newer copy.'); return; }
+    }
     if(existing){
       driveFileId = existing.id;
       await driveApi(`/upload/drive/v3/files/${driveFileId}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body });
@@ -403,7 +428,7 @@ async function driveSyncTo(){
       driveFileId = (await r.json()).id;
     }
     const now = new Date().toLocaleString();
-    localStorage.setItem('moneyProfileDriveLastSync', now);
+    localStorage.setItem('moneyProfileDriveLastSync', now); localStorage.setItem('moneyProfileDriveLastSyncISO', new Date().toISOString());
     $('driveLast').textContent = 'Last synced: ' + now;
     $('driveCollapsedLast').textContent = 'Last synced: ' + now;
     driveSetStatus('Synced to Drive ✓ — open the app on any device, Connect Drive with the same Google account, then “Load from Drive”.');
@@ -420,9 +445,10 @@ async function driveLoadFrom(){
     const d = await r.json();
     let total = 0;
     if(Array.isArray(d.profiles)){
-      total = d.profiles.reduce((s,p)=>s+(p.entries?p.entries.length:0),0);
-      if(state.profiles.length && !confirm('Replace the profiles in this browser with the ' + d.profiles.length + ' profile(s) / ' + total + ' months from Drive?')) return;
-      state = d; if(!state.currentProfileId) state.currentProfileId = state.profiles[0].id;
+      const v=validateState(d); if(!v) throw new Error('That Drive file is not a valid Money Profile file.');
+      total = v.profiles.reduce((s,p)=>s+(p.entries?p.entries.length:0),0);
+      if(state.profiles.length && !confirm('Replace the profiles in this browser with the ' + v.profiles.length + ' profile(s) / ' + total + ' months from Drive? Your current data is kept as a backup in this browser.')) return;
+      state = v; if(!state.currentProfileId) state.currentProfileId = state.profiles[0].id;
     } else if(Array.isArray(d.entries)){
       total = d.entries.length;
       const pr = prof();
@@ -586,7 +612,7 @@ $('whyTryBtn').onclick=()=>{ $('whyOverlay').hidden=true; welcomeOpen=true; rend
 $('householdBtn').onclick=()=>{
   const totals=state.profiles.map(p=>{
     const es=[...p.entries].sort((a,b)=>a.month.localeCompare(b.month)); const last=es[es.length-1];
-    return last ? {name:p.name, income:last.income, spend:totalSpend(last), surplus:surplus(last), nw:netWorth(last)} : null;
+    return last ? {name:esc(p.name), income:last.income, spend:totalSpend(last), surplus:surplus(last), nw:netWorth(last)} : null;
   }).filter(Boolean);
   const sum=k=>totals.reduce((s,x)=>s+x[k],0);
   $('householdBody').innerHTML = totals.length ? `<p><strong>${totals.length} profile(s)</strong></p><p>Income: ${money(sum('income'))}<br>Spending: ${money(sum('spend'))}<br>Surplus: ${money(sum('surplus'))}<br>Net worth: ${money(sum('nw'))}</p>` + totals.map(x=>`<p>${x.name}: surplus ${money(x.surplus)}, net worth ${money(x.nw)}</p>`).join('') : '<p class="muted">No profiles with months yet.</p>';
