@@ -148,5 +148,82 @@ $('sampleBtn').onclick=()=>{
   ];
   save(); render();
 };
+// ---- Google Drive sync (wired to this repo) ----
+// How it works: the app signs you in to Google in your browser (Google Identity
+// Services, drive.file scope — the app can only see the file it creates).
+// It stores one private file in your Drive: money-profile.json.
+// Same Google account + same file on any device = same data everywhere.
+// You need a Google OAuth Client ID (free, see README). Paste it once below;
+// it is saved only in this browser's localStorage, never in the repo.
+const DRIVE_FILE = 'money-profile.json';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+let driveToken = null, driveFileId = null, driveClient = null;
+function driveSetStatus(t){ $('driveStatus').textContent = t; }
+function driveClientId(){ return ($('driveClientId').value || '').trim(); }
+function driveInit(){
+  const id = driveClientId();
+  if(!id){ alert('Paste your Google OAuth Client ID first — see README, "Google Drive sync setup".'); $('driveClientId').focus(); return false; }
+  localStorage.setItem('moneyProfileDriveClientId', id);
+  if(typeof google === 'undefined' || !google.accounts){ alert('Google sign-in library did not load. Check your connection and reload.'); return false; }
+  driveClient = google.accounts.oauth2.initTokenClient({ client_id: id, scope: DRIVE_SCOPE,
+    callback: (resp)=>{ if(resp.access_token){ driveToken = resp.access_token; driveSetStatus('Connected to Google Drive. Tap “Sync now” to save, or “Load from Drive” on a new device.'); $('driveSyncBtn').disabled = false; $('driveLoadBtn').disabled = false; } else driveSetStatus('Drive sign-in failed — try Connect again.'); } });
+  return true;
+}
+async function driveApi(path, opts={}){
+  const r = await fetch('https://www.googleapis.com' + path, { ...opts, headers: { Authorization: 'Bearer ' + driveToken, ...(opts.headers||{}) } });
+  if(!r.ok) throw new Error('Drive request failed: ' + r.status);
+  return r;
+}
+async function driveFindFile(){
+  const q = encodeURIComponent(`name = '${DRIVE_FILE}' and trashed = false`);
+  const r = await driveApi(`/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name,modifiedTime)`);
+  const d = await r.json(); return d.files && d.files[0] ? d.files[0] : null;
+}
+async function driveSyncTo(){
+  if(!driveToken){ alert('Connect Drive first.'); return; }
+  driveSetStatus('Saving to Drive…');
+  const body = JSON.stringify(state, null, 2);
+  try{
+    const existing = driveFileId ? { id: driveFileId } : await driveFindFile();
+    if(existing){
+      driveFileId = existing.id;
+      await driveApi(`/upload/drive/v3/files/${driveFileId}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body });
+    } else {
+      const meta = { name: DRIVE_FILE, mimeType: 'application/json' };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+      form.append('file', new Blob([body], { type: 'application/json' }));
+      const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: 'Bearer ' + driveToken }, body: form });
+      if(!r.ok) throw new Error('Drive upload failed: ' + r.status);
+      driveFileId = (await r.json()).id;
+    }
+    const now = new Date().toLocaleString();
+    localStorage.setItem('moneyProfileDriveLastSync', now);
+    $('driveLast').textContent = 'Last synced: ' + now;
+    driveSetStatus('Synced to Drive ✓ — open the app on any device, Connect Drive with the same Google account, then “Load from Drive”.');
+  }catch(e){ driveSetStatus('Sync failed: ' + e.message + ' — try Connect again.'); }
+}
+async function driveLoadFrom(){
+  if(!driveToken){ alert('Connect Drive first.'); return; }
+  driveSetStatus('Loading from Drive…');
+  try{
+    const existing = driveFileId ? { id: driveFileId } : await driveFindFile();
+    if(!existing){ driveSetStatus('No money-profile.json in Drive yet — tap “Sync now” on the device that has your data.'); return; }
+    driveFileId = existing.id;
+    const r = await driveApi(`/drive/v3/files/${driveFileId}?alt=media`);
+    const d = await r.json();
+    if(!Array.isArray(d.entries)) throw new Error('That Drive file is not a Money Profile file.');
+    if(state.entries.length && !confirm('Replace the months in this browser with the ' + d.entries.length + ' months from Drive?')) return;
+    state = d; save(); render();
+    driveSetStatus('Loaded ' + d.entries.length + ' months from Drive ✓');
+  }catch(e){ driveSetStatus('Load failed: ' + e.message); }
+}
+$('driveConnectBtn').onclick=()=>{ if(driveInit()) driveClient.requestAccessToken(); };
+$('driveSyncBtn').onclick=driveSyncTo;
+$('driveLoadBtn').onclick=driveLoadFrom;
+$('driveBtn').onclick=()=>{ $('driveCard').scrollIntoView({behavior:'smooth'}); $('driveClientId').focus(); };
+$('driveClientId').addEventListener('input', e=>localStorage.setItem('moneyProfileDriveClientId', e.target.value.trim()));
+(()=>{ const savedId = localStorage.getItem('moneyProfileDriveClientId'); if(savedId) $('driveClientId').value = savedId; const last = localStorage.getItem('moneyProfileDriveLastSync'); if(last) $('driveLast').textContent = 'Last synced: ' + last; })();
+
 // Default month = current month
 (()=>{ const d=new Date(); $('fMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render(); updateLive(); })();

@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -23,6 +24,7 @@
       <button class="btn ghost" id="sampleBtn" type="button">✦ Load sample data</button>
       <button class="btn ghost" id="exportBtn" type="button">↓ Export</button>
       <label class="btn ghost file-btn">↑ Import <input type="file" id="importFile" accept=".json" hidden></label>
+      <button class="btn ghost" id="driveBtn" type="button">☁ Drive Sync</button>
       <button class="btn primary" id="addMonthBtn" type="button">+ Add this month</button>
     </div>
   </div>
@@ -52,6 +54,24 @@
         <label>Months tracked</label>
         <strong id="monthsCount" class="big-num">0</strong>
       </div>
+    </div>
+  </section>
+
+  <!-- DRIVE SYNC -->
+  <section class="card drive-card" id="driveCard">
+    <div>
+      <h3>☁ Google Drive sync — use on any device</h3>
+      <p class="muted" id="driveStatus">Not connected. Your data is only in this browser until you sync it to Drive.</p>
+      <p class="muted small">One file in your Drive: <code>money-profile.json</code> — private, only the app can read it (drive.file scope). First time: paste your Google OAuth Client ID below, then Connect. See README for the 5-minute setup.</p>
+    </div>
+    <div class="drive-fields">
+      <label>Google OAuth Client ID <input id="driveClientId" placeholder="123456…apps.googleusercontent.com" autocomplete="off"></label>
+      <div class="drive-actions">
+        <button class="btn primary" id="driveConnectBtn" type="button">Connect Drive</button>
+        <button class="btn ghost" id="driveSyncBtn" type="button" disabled>↑ Sync now — save to Drive</button>
+        <button class="btn ghost" id="driveLoadBtn" type="button" disabled>↓ Load from Drive</button>
+      </div>
+      <p class="muted small" id="driveLast">Last synced: never</p>
     </div>
   </section>
 
