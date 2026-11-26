@@ -8,7 +8,7 @@ let charts = {};
 // First-time page: show the welcome chooser when there is no profile yet,
 // OR when the page was opened with ?welcome=1 (e.g. after tapping
 // "↻ Latest version" — that button always lands on the chooser).
-let welcomeOpen = state.profiles.length === 0 || new URLSearchParams(location.search).get('welcome') === '1';
+let welcomeOpen = state.profiles.length === 0 || new URLSearchParams(location.search).get('welcome') === '1' || new URLSearchParams(location.search).has('v');
 
 function load(){
   try{
@@ -51,6 +51,7 @@ function render(){
   // Welcome: show when there is no profile yet, or when the user tapped
   // "+ New profile". Otherwise hide it — they already picked a profile.
   $('welcomeOverlay').hidden = !welcomeOpen;
+  if(!$('profilePickerOverlay').hidden) renderProfilePicker();
   $('profileName').value = p ? (p.name || '') : '';
   $('avatarInitial').textContent = p && p.name ? p.name[0].toUpperCase() : '?';
   $('currency').value = p ? p.currency : 'USD';
@@ -320,9 +321,22 @@ $('refreshAppBtn').onclick=async ()=>{
   try{ await fetch(location.href.split('?')[0], { cache:'no-store' }); }catch(e){ /* offline — reload anyway */ }
   location.href = location.pathname + '?v=' + Date.now() + '&welcome=1';
 };
-// 👤 Switch profile — on the main page, open the same first-time chooser
-// (use an existing profile, or create a new one) without reloading.
-$('switchProfileBtn').onclick=()=>{ welcomeOpen=true; $('welcomeName').value=''; render(); window.scrollTo({top:0, behavior:'smooth'}); };
+// 👤 Switch profile — show a popup listing every profile to pick from,
+// with "Add new profile" in the same list. No reload, no data cleared.
+function renderProfilePicker(){
+  const list = $('profilePickerList');
+  list.innerHTML = state.profiles.map(x=>`<button class="picker-item" type="button" data-pick="${x.id}"><span class="avatar">${x.name?x.name[0].toUpperCase():'?'}</span><span><strong>${x.name||'Unnamed profile'}</strong><small>${x.entries.length} month${x.entries.length===1?'':'s'} tracked</small></span>${x.id===state.currentProfileId?'<span class="tick">✓</span>':''}</button>`).join('') || '<p class="muted">No profiles yet — add a new one below.</p>';
+  list.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{
+    state.currentProfileId = b.dataset.pick; welcomeOpen = false; save(); render();
+    $('profilePickerOverlay').hidden = true;
+    history.replaceState(null, '', location.pathname);
+  });
+}
+function openProfilePicker(){ renderProfilePicker(); $('profilePickerOverlay').hidden = false; }
+$('switchProfileBtn').onclick=openProfilePicker;
+$('pickerClose').onclick=()=>{ $('profilePickerOverlay').hidden = true; };
+$('profilePickerOverlay').addEventListener('click', e=>{ if(e.target===$('profilePickerOverlay')) $('profilePickerOverlay').hidden = true; });
+$('pickerAddNew').onclick=()=>{ $('profilePickerOverlay').hidden = true; welcomeOpen=true; $('welcomeName').value=''; render(); $('welcomeName').focus(); };
 (()=>{ const el=$('footerVersion'); if(el) el.textContent = 'Version ' + APP_VERSION + ' • Tap “↻ Latest version” at the top to get the newest app'; })();
 
 // Default month = current month
