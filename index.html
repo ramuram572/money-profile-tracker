@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Money Profile — Your Monthly Money, Clearly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <div class="logo">₹$</div>
+      <div>
+        <h1>Money Profile</h1>
+        <p>Enter once a month. See the truth in green &amp; red.</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn ghost" id="sampleBtn" type="button">✦ Load sample data</button>
+      <button class="btn ghost" id="exportBtn" type="button">↓ Export</button>
+      <label class="btn ghost file-btn">↑ Import <input type="file" id="importFile" accept=".json" hidden></label>
+      <button class="btn primary" id="addMonthBtn" type="button">+ Add this month</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- PROFILE -->
+  <section class="card profile-card">
+    <div class="profile-left">
+      <div class="avatar" id="avatarInitial">R</div>
+      <div>
+        <label class="field-label">Your name</label>
+        <input id="profileName" class="inline-input" value="Ram" placeholder="Your name" />
+        <p class="muted" id="profileSub">Monthly money profile • All data stays in your browser</p>
+      </div>
+    </div>
+    <div class="profile-fields">
+      <div>
+        <label>Currency</label>
+        <select id="currency"><option value="USD">$ USD</option><option value="INR">₹ INR</option><option value="EUR">€ EUR</option><option value="GBP">£ GBP</option></select>
+      </div>
+      <div>
+        <label>Monthly goal — savings rate</label>
+        <div class="goal-wrap"><input id="savingsGoal" type="number" min="0" max="100" value="20"> <span>%</span></div>
+      </div>
+      <div>
+        <label>Months tracked</label>
+        <strong id="monthsCount" class="big-num">0</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- VERDICT -->
+  <section id="verdict" class="verdict neutral">
+    <div class="verdict-icon" id="verdictIcon">●</div>
+    <div>
+      <h2 id="verdictTitle">Add your first month to see your verdict</h2>
+      <p id="verdictText">Enter income, spending, savings and net worth once a month. Green means you're ahead. Red means spending beat income, or net worth fell.</p>
+    </div>
+    <div class="verdict-score"><span id="verdictScore">—</span><small>latest month</small></div>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats">
+    <div class="stat card"><span>Income <small>latest</small></span><strong id="statIncome" class="green-text">$0</strong><em id="statIncomeDelta">—</em></div>
+    <div class="stat card"><span>Spending <small>latest</small></span><strong id="statSpend">$0</strong><em id="statSpendDelta">—</em></div>
+    <div class="stat card"><span>Surplus / Deficit <small>latest</small></span><strong id="statSurplus">$0</strong><em id="statSurplusNote">Income − Spending</em></div>
+    <div class="stat card"><span>Savings rate <small>latest</small></span><strong id="statRate">—</strong><em id="statRateNote">Goal 20%</em></div>
+    <div class="stat card"><span>Net worth <small>latest</small></span><strong id="statNetWorth">$0</strong><em id="statNetWorthDelta">—</em></div>
+    <div class="stat card"><span>Invested <small>latest</small></span><strong id="statInvested">$0</strong><em>Stocks • 401(k) • Funds</em></div>
+  </section>
+
+  <!-- CHARTS -->
+  <section class="charts">
+    <div class="card chart-card wide">
+      <div class="card-head"><div><h3>Income vs Spending</h3><p>Green bar = surplus month &nbsp;•&nbsp; Red bar = deficit month</p></div><span class="pill" id="trendPill">—</span></div>
+      <div class="chart-box"><canvas id="incomeChart"></canvas></div>
+      <div class="legend"><span><i class="dot green"></i> Income</span><span><i class="dot red"></i> Spending</span><span><i class="dot line"></i> Surplus</span></div>
+    </div>
+    <div class="card chart-card">
+      <div class="card-head"><div><h3>Net Worth</h3><p>Green up, red down vs last month</p></div></div>
+      <div class="chart-box"><canvas id="netWorthChart"></canvas></div>
+      <div class="networth-note" id="netWorthNote">—</div>
+    </div>
+    <div class="card chart-card">
+      <div class="card-head"><div><h3>Where it went</h3><p id="breakdownLabel">Latest month</p></div></div>
+      <div class="chart-box"><canvas id="breakdownChart"></canvas></div>
+    </div>
+    <div class="card chart-card wide">
+      <div class="card-head"><div><h3>Savings Rate</h3><p>Surplus ÷ Income — green at or above your goal</p></div></div>
+      <div class="chart-box short"><canvas id="savingsChart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- FORM + HISTORY -->
+  <section class="two-col">
+    <div class="card form-card" id="formCard">
+      <h3>✎ Monthly entry — once a month</h3>
+      <p class="muted">Pick a month, fill the numbers, save. If the month already exists, saving updates it.</p>
+      <form id="monthForm">
+        <label>Month <input type="month" id="fMonth" required></label>
+        <div class="grid2">
+          <label>Take-home income <input type="number" id="fIncome" min="0" step="0.01" placeholder="e.g. 8500" required></label>
+          <label>Saved / invested this month <input type="number" id="fSaved" min="0" step="0.01" placeholder="e.g. 1500"></label>
+        </div>
+        <h4>Spending</h4>
+        <div class="grid2">
+          <label>Housing / Rent <input type="number" class="exp" data-k="housing" min="0" step="0.01" placeholder="0"></label>
+          <label>Food &amp; Groceries <input type="number" class="exp" data-k="food" min="0" step="0.01" placeholder="0"></label>
+          <label>Transport <input type="number" class="exp" data-k="transport" min="0" step="0.01" placeholder="0"></label>
+          <label>Subscriptions <input type="number" class="exp" data-k="subs" min="0" step="0.01" placeholder="0"></label>
+          <label>Shopping <input type="number" class="exp" data-k="shopping" min="0" step="0.01" placeholder="0"></label>
+          <label>Fun / Eating out <input type="number" class="exp" data-k="fun" min="0" step="0.01" placeholder="0"></label>
+          <label>Health <input type="number" class="exp" data-k="health" min="0" step="0.01" placeholder="0"></label>
+          <label>Other <input type="number" class="exp" data-k="other" min="0" step="0.01" placeholder="0"></label>
+        </div>
+        <div class="grid2">
+          <label>Total assets <small>bank + investments + property</small> <input type="number" id="fAssets" min="0" step="0.01" placeholder="e.g. 120000"></label>
+          <label>Total debts <small>loans + cards + mortgage</small> <input type="number" id="fDebts" min="0" step="0.01" placeholder="e.g. 40000"></label>
+        </div>
+        <div class="live-total">Total spending: <strong id="liveSpend">$0</strong> &nbsp;•&nbsp; Surplus: <strong id="liveSurplus" class="green-text">$0</strong></div>
+        <div class="form-actions">
+          <button class="btn primary big" type="submit">Save this month</button>
+          <button class="btn ghost" type="button" id="clearFormBtn">Clear</button>
+        </div>
+        <p class="muted small">Tip: enter the month once, right after payday. The graphs update instantly.</p>
+      </form>
+    </div>
+
+    <div class="card history-card">
+      <div class="card-head"><div><h3>History</h3><p>Every month, one row — green or red at a glance</p></div><button class="btn ghost small" id="clearAllBtn" type="button">Clear all</button></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Month</th><th>Income</th><th>Spent</th><th>Surplus</th><th>Net worth</th><th></th></tr></thead>
+        <tbody id="historyBody"><tr><td colspan="6" class="empty">No months yet — add your first one.</td></tr></tbody>
+      </table></div>
+      <p class="muted small">Green surplus = you kept money. Red = you spent more than you earned that month. Net worth ▲ green / ▼ red vs the previous month.</p>
+    </div>
+  </section>
+
+  <footer class="muted small center">Money Profile • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
