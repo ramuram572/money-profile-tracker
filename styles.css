@@ -274,3 +274,9 @@ html[data-theme="light"].menu-open #topActions{background:#fff}
 html.left-handed .top-actions{flex-wrap:wrap}
 /* Why / Household / Year modals: never clip at the right edge */
 .modal-card,.welcome-card{max-width:calc(100vw - 32px)}
+
+/* v41 iOS + Android compatibility */
+body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom)}
+*{ -webkit-tap-highlight-color:transparent }
+button,.btn{touch-action:manipulation}
+form input,form select,.welcome-card input{font-size:16px}
