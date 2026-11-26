@@ -1,16 +1,35 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
+const APP_VERSION = '2026-11-26.4';
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
 const EXPENSE_KEYS = [['housing','Housing'],['food','Food'],['transport','Transport'],['subs','Subscriptions'],['shopping','Shopping'],['fun','Fun / Eating out'],['health','Health'],['other','Other']];
 let state = load();
 let charts = {};
+let welcomeOpen = state.profiles.length === 0;
 
-function load(){ try{ const d = JSON.parse(localStorage.getItem(KEY)); if(d && Array.isArray(d.entries)){ if(!d.profile) d.profile={name:'',currency:'USD',goal:20}; return d; } }catch(e){} return { profile:{name:'', currency:'USD', goal:20}, entries:[] }; }
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if(d && Array.isArray(d.profiles)){
+      d.profiles.forEach((p,i)=>{ if(!p.id) p.id='p'+(i+1); if(!Array.isArray(p.entries)) p.entries=[]; if(!p.currency) p.currency='USD'; if(p.goal==null) p.goal=20; });
+      if(!d.currentProfileId || !d.profiles.find(p=>p.id===d.currentProfileId)) d.currentProfileId = d.profiles[0] ? d.profiles[0].id : null;
+      return d;
+    }
+    // Legacy single-profile format (profile + entries) → migrate to profiles
+    if(d && Array.isArray(d.entries)){
+      const p = d.profile || {name:'',currency:'USD',goal:20};
+      const prof = { id:'p1', name:p.name||'', currency:p.currency||'USD', goal:p.goal||20, entries:d.entries };
+      return { profiles:[prof], currentProfileId:'p1' };
+    }
+  }catch(e){}
+  return { profiles:[], currentProfileId:null };
+}
 function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
-function cur(){ return state.profile.currency === 'INR' ? '₹' : state.profile.currency === 'EUR' ? '€' : state.profile.currency === 'GBP' ? '£' : '$'; }
+function prof(){ return state.profiles.find(p=>p.id===state.currentProfileId) || state.profiles[0] || null; }
+function cur(){ const p=prof(); const c=p?p.currency:'USD'; return c === 'INR' ? '₹' : c === 'EUR' ? '€' : c === 'GBP' ? '£' : '$'; }
 function money(n){ return cur() + Math.round(Number(n)||0).toLocaleString('en-US'); }
 function num(id){ return parseFloat($(id).value) || 0; }
-function sorted(){ return [...state.entries].sort((a,b)=>a.month.localeCompare(b.month)); }
+function sorted(){ const p=prof(); return p ? [...p.entries].sort((a,b)=>a.month.localeCompare(b.month)) : []; }
 function totalSpend(e){ return EXPENSE_KEYS.reduce((s,[k])=>s + (Number(e.expenses[k])||0), 0); }
 function surplus(e){ return (Number(e.income)||0) - totalSpend(e); }
 function netWorth(e){ return (Number(e.assets)||0) - (Number(e.debts)||0); }
@@ -18,15 +37,21 @@ function rate(e){ return e.income ? surplus(e)/e.income*100 : 0; }
 function monthLabel(m){ const [y,mo]=m.split('-'); return new Date(+y, +mo-1, 1).toLocaleDateString('en-US',{month:'short', year:'numeric'}); }
 
 function render(){
+  const p = prof();
   const entries = sorted();
-  $('profileName').value = state.profile.name || '';
-  $('avatarInitial').textContent = state.profile.name ? state.profile.name[0].toUpperCase() : '?';
-  // Welcome onboarding: ask for their own name on first use. The name is part
-  // of state.profile, so it is saved to Drive on Sync and restored on Load —
-  // they never have to type it again on any device.
-  $('welcomeOverlay').hidden = !!state.profile.name;
-  $('currency').value = state.profile.currency;
-  $('savingsGoal').value = state.profile.goal;
+  // Profile dropdown — pick an existing profile, or create a new one
+  $('profileSelect').innerHTML = state.profiles.map(x=>`<option value="${x.id}">${x.name||'Unnamed profile'}${x.entries.length?` (${x.entries.length} mo)`:''}</option>`).join('');
+  if(p) $('profileSelect').value = p.id;
+  $('welcomeProfileSelect').innerHTML = state.profiles.map(x=>`<option value="${x.id}">${x.name||'Unnamed profile'}${x.entries.length?` (${x.entries.length} mo)`:''}</option>`).join('');
+  $('welcomeExisting').hidden = state.profiles.length === 0;
+  if(p) $('welcomeProfileSelect').value = p.id;
+  // Welcome: show when there is no profile yet, or when the user tapped
+  // "+ New profile". Otherwise hide it — they already picked a profile.
+  $('welcomeOverlay').hidden = !welcomeOpen;
+  $('profileName').value = p ? (p.name || '') : '';
+  $('avatarInitial').textContent = p && p.name ? p.name[0].toUpperCase() : '?';
+  $('currency').value = p ? p.currency : 'USD';
+  $('savingsGoal').value = p ? p.goal : 20;
   $('monthsCount').textContent = entries.length;
   $('profileSub').textContent = entries.length ? `Monthly money profile • ${entries.length} month${entries.length>1?'s':''} tracked • Data stays in your browser` : 'Monthly money profile • All data stays in your browser';
 
@@ -45,8 +70,8 @@ function render(){
     $('statSurplus').textContent = (s>=0?'+':'−') + money(Math.abs(s)).slice(0);
     $('statSurplus').className = s>=0?'green-text':'red-text';
     $('statRate').textContent = r.toFixed(1)+'%';
-    $('statRate').className = r>=state.profile.goal?'green-text':'red-text';
-    $('statRateNote').textContent = `Goal ${state.profile.goal}% • ${r>=state.profile.goal?'✓ on track':'✗ below goal'}`;
+    $('statRate').className = r>=p.goal?'green-text':'red-text';
+    $('statRateNote').textContent = `Goal ${p.goal}% • ${r>=p.goal?'✓ on track':'✗ below goal'}`;
     $('statNetWorth').textContent = money(nw);
     $('statNetWorth').className = nw>=0?'green-text':'red-text';
     $('statInvested').textContent = money(last.saved||0);
@@ -81,8 +106,8 @@ function render(){
     const nwDelta = prev? nw-netWorth(prev) : null;
     return `<tr><td><strong>${monthLabel(e.month)}</strong></td><td>${money(e.income)}</td><td>${money(totalSpend(e))}</td><td><span class="badge ${s>=0?'green':'red'}">${s>=0?'▲ +':'▼ −'}${money(Math.abs(s)).slice(1)}</span></td><td>${money(nw)} ${nwDelta==null?'':`<span class="${nwDelta>=0?'green-text':'red-text'}">${nwDelta>=0?'▲':'▼'}</span>`}</td><td><button class="row-btn" data-edit="${e.month}" title="Edit">✎</button> <button class="row-btn" data-del="${e.month}" title="Delete">🗑</button></td></tr>`;
   }).join('');
-  body.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ if(confirm('Delete '+monthLabel(b.dataset.del)+'?')){ state.entries = state.entries.filter(e=>e.month!==b.dataset.del); save(); render(); }});
-  body.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>fillForm(state.entries.find(e=>e.month===b.dataset.edit)));
+  body.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ const pr=prof(); if(!pr) return; if(confirm('Delete '+monthLabel(b.dataset.del)+'?')){ pr.entries = pr.entries.filter(e=>e.month!==b.dataset.del); save(); render(); }});
+  body.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>fillForm(prof().entries.find(e=>e.month===b.dataset.edit)));
 
   drawCharts(entries);
 }
@@ -103,7 +128,7 @@ function drawCharts(entries){
     mk('netWorthChart',{type:'line',data:{labels,datasets:[{label:'Net worth',data:nws,borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.15)',fill:true,pointBackgroundColor:nws.map((v,i)=>i===0||v>=nws[i-1]?'#22c55e':'#ef4444'),pointRadius:6,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#22304d'}},x:{grid:{display:false}}}}});
     const last=entries[entries.length-1];
     mk('breakdownChart',{type:'doughnut',data:{labels:EXPENSE_KEYS.map(([,l])=>l),datasets:[{data:EXPENSE_KEYS.map(([k])=>last.expenses[k]||0),backgroundColor:['#6366f1','#22c55e','#f59e0b','#ef4444','#ec4899','#14b8a6','#a78bfa','#94a3b8'],borderWidth:2,borderColor:'#111a2e'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}}}}});
-    mk('savingsChart',{type:'bar',data:{labels,datasets:[{label:'Savings rate %',data:rates,backgroundColor:rates.map(v=>v>=state.profile.goal?'#22c55e':'#ef4444'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#22304d'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}});
+    mk('savingsChart',{type:'bar',data:{labels,datasets:[{label:'Savings rate %',data:rates,backgroundColor:rates.map(v=>v>=(prof()?prof().goal:20)?'#22c55e':'#ef4444'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#22304d'},ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}});
   }
 }
 
@@ -123,28 +148,32 @@ $('monthForm').addEventListener('submit', ev=>{
   const month=$('fMonth').value; if(!month) return;
   const expenses={}; document.querySelectorAll('.exp').forEach(i=>expenses[i.dataset.k]=parseFloat(i.value)||0);
   const entry={month, income:num('fIncome'), saved:num('fSaved'), assets:num('fAssets'), debts:num('fDebts'), expenses};
-  const idx=state.entries.findIndex(e=>e.month===month);
-  if(idx>=0){ state.entries[idx]=entry; alert(monthLabel(month)+' updated.'); } else state.entries.push(entry);
+  const pr=prof(); if(!pr){ alert('Create a profile first.'); return; }
+  const idx=pr.entries.findIndex(e=>e.month===month);
+  if(idx>=0){ pr.entries[idx]=entry; alert(monthLabel(month)+' updated.'); } else pr.entries.push(entry);
   save(); render(); ev.target.reset(); $('fMonth').value=month; updateLive();
 });
 $('clearFormBtn').onclick=()=>{ $('monthForm').reset(); updateLive(); };
 document.querySelectorAll('.exp, #fIncome').forEach(i=>i.addEventListener('input', updateLive));
 $('addMonthBtn').onclick=()=>{ const d=new Date(); $('fMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; $('formCard').scrollIntoView({behavior:'smooth'}); $('fIncome').focus(); };
-$('profileName').addEventListener('input', e=>{ state.profile.name=e.target.value; save(); $('avatarInitial').textContent=e.target.value ? e.target.value[0].toUpperCase() : '?'; });
-$('currency').addEventListener('change', e=>{ state.profile.currency=e.target.value; save(); render(); });
-$('savingsGoal').addEventListener('input', e=>{ state.profile.goal=parseFloat(e.target.value)||20; save(); render(); });
-$('clearAllBtn').onclick=()=>{ if(confirm('Delete ALL months? This cannot be undone.')){ state.entries=[]; save(); render(); } };
+$('profileName').addEventListener('input', e=>{ const pr=prof(); if(!pr) return; pr.name=e.target.value; save(); $('avatarInitial').textContent=e.target.value ? e.target.value[0].toUpperCase() : '?'; const opt=$('profileSelect').querySelector(`option[value="${pr.id}"]`); if(opt) opt.textContent=e.target.value||'Unnamed profile'; });
+$('currency').addEventListener('change', e=>{ const pr=prof(); if(!pr) return; pr.currency=e.target.value; save(); render(); });
+$('savingsGoal').addEventListener('input', e=>{ const pr=prof(); if(!pr) return; pr.goal=parseFloat(e.target.value)||20; save(); render(); });
+$('profileSelect').addEventListener('change', e=>{ state.currentProfileId=e.target.value; save(); render(); });
+$('newProfileBtn').onclick=()=>{ welcomeOpen=true; $('welcomeName').value=''; render(); $('welcomeOverlay').scrollIntoView({behavior:'smooth'}); $('welcomeName').focus(); };
+$('clearAllBtn').onclick=()=>{ const pr=prof(); if(!pr) return; if(confirm('Delete ALL months in this profile? This cannot be undone.')){ pr.entries=[]; save(); render(); } };
 $('exportBtn').onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='money-profile.json'; a.click();
 };
 $('importFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(Array.isArray(d.entries)){ state=d; save(); render(); alert('Imported '+d.entries.length+' months.'); } else alert('That file does not look like a Money Profile export.'); }catch(err){ alert('Could not read that file.'); } }; r.readAsText(f);
+  const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(Array.isArray(d.profiles)){ state=d; if(!state.currentProfileId) state.currentProfileId=state.profiles[0].id; save(); render(); alert('Imported '+state.profiles.length+' profile(s).'); } else if(Array.isArray(d.entries)){ const pr=prof(); if(!pr){ alert('Create a profile first.'); return; } pr.entries=d.entries; save(); render(); alert('Imported '+d.entries.length+' months.'); } else alert('That file does not look like a Money Profile export.'); }catch(err){ alert('Could not read that file.'); } }; r.readAsText(f);
 });
 $('sampleBtn').onclick=()=>{
-  if(state.entries.length && !confirm('Load sample data? This will replace your current months. Export first if you want to keep them.')) return;
-  state.entries=[
+  const pr=prof(); if(!pr){ alert('Create a profile first.'); return; }
+  if(pr.entries.length && !confirm('Load sample data? This will replace your current months. Export first if you want to keep them.')) return;
+  pr.entries=[
     {month:'2026-08',income:8200,saved:1200,assets:98000,debts:52000,expenses:{housing:1800,food:650,transport:320,subs:85,shopping:420,fun:380,health:210,other:150}},
     {month:'2026-09',income:8400,saved:1500,assets:101000,debts:50500,expenses:{housing:1800,food:600,transport:300,subs:85,shopping:300,fun:260,health:180,other:120}},
     {month:'2026-10',income:8600,saved:900,assets:102500,debts:49800,expenses:{housing:1850,food:720,transport:410,subs:110,shopping:680,fun:540,health:240,other:310}},
@@ -228,10 +257,20 @@ async function driveLoadFrom(){
     driveFileId = existing.id;
     const r = await driveApi(`/drive/v3/files/${driveFileId}?alt=media`);
     const d = await r.json();
-    if(!Array.isArray(d.entries)) throw new Error('That Drive file is not a Money Profile file.');
-    if(state.entries.length && !confirm('Replace the months in this browser with the ' + d.entries.length + ' months from Drive?')) return;
-    state = d; save(); render();
-    driveSetStatus('Loaded ' + d.entries.length + ' months from Drive ✓');
+    let total = 0;
+    if(Array.isArray(d.profiles)){
+      total = d.profiles.reduce((s,p)=>s+(p.entries?p.entries.length:0),0);
+      if(state.profiles.length && !confirm('Replace the profiles in this browser with the ' + d.profiles.length + ' profile(s) / ' + total + ' months from Drive?')) return;
+      state = d; if(!state.currentProfileId) state.currentProfileId = state.profiles[0].id;
+    } else if(Array.isArray(d.entries)){
+      total = d.entries.length;
+      const pr = prof();
+      if(pr && pr.entries.length && !confirm('Replace the months in this browser with the ' + total + ' months from Drive?')) return;
+      if(pr) pr.entries = d.entries;
+    } else throw new Error('That Drive file is not a Money Profile file.');
+    welcomeOpen = state.profiles.length === 0;
+    save(); render();
+    driveSetStatus('Loaded ' + total + ' months from Drive ✓');
   }catch(e){ driveSetStatus('Load failed: ' + e.message); }
 }
 $('driveConnectBtn').onclick=()=>{ if(driveInit()) driveClient.requestAccessToken(); };
@@ -250,10 +289,31 @@ $('driveClientId').addEventListener('input', e=>localStorage.setItem('moneyProfi
 $('welcomeStart').onclick=()=>{
   const name = $('welcomeName').value.trim();
   if(!name){ $('welcomeName').focus(); $('welcomeName').placeholder = 'Please enter your name to continue'; return; }
-  state.profile.name = name; save(); render();
+  // If there is one unnamed profile (migrated from the old single-profile
+  // version), just name it instead of creating a duplicate.
+  if(state.profiles.length===1 && !prof().name){ prof().name=name; }
+  else {
+    const p = { id:'p'+Date.now(), name, currency:'USD', goal:20, entries:[] };
+    state.profiles.push(p); state.currentProfileId = p.id;
+  }
+  welcomeOpen = false; save(); render();
   if(driveToken) driveSyncTo(); // save the name to Drive right away if already connected
 };
+$('welcomeUseExisting').onclick=()=>{
+  state.currentProfileId = $('welcomeProfileSelect').value;
+  welcomeOpen = false; save(); render();
+};
 $('welcomeName').addEventListener('keydown', e=>{ if(e.key==='Enter') $('welcomeStart').click(); });
+
+// ↻ Latest version — get the newest app code without clearing cookies or data.
+// localStorage (your profiles/months) survives a reload; this just busts the
+// browser cache so GitHub Pages serves the latest index.html / app.js / styles.css.
+$('refreshAppBtn').onclick=async ()=>{
+  const btn = $('refreshAppBtn'); btn.disabled = true; btn.textContent = '↻ Checking…';
+  try{ await fetch(location.href.split('?')[0], { cache:'no-store' }); }catch(e){ /* offline — reload anyway */ }
+  location.href = location.pathname + '?v=' + Date.now();
+};
+(()=>{ const el=$('footerVersion'); if(el) el.textContent = 'Version ' + APP_VERSION + ' • Tap “↻ Latest version” at the top to get the newest app'; })();
 
 // Default month = current month
 (()=>{ const d=new Date(); $('fMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render(); updateLive(); })();

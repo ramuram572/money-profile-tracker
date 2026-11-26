@@ -20,10 +20,17 @@
     </div>
     <h2>Welcome to your<br>Money Tracker</h2>
     <p>Enter your money numbers once a month.<br>Watch your graphs turn green — or red.</p>
+    <div id="welcomeExisting" class="welcome-choice" hidden>
+      <label>Use an existing profile
+        <select id="welcomeProfileSelect"></select>
+      </label>
+      <button class="btn primary big" id="welcomeUseExisting" type="button">Use this profile →</button>
+      <p class="welcome-divider">— or create a new one —</p>
+    </div>
     <label>What should we call you?
       <input id="welcomeName" placeholder="Enter your name" autocomplete="name" maxlength="40">
     </label>
-    <button class="btn primary big" id="welcomeStart" type="button">Start tracking →</button>
+    <button class="btn primary big" id="welcomeStart" type="button">Create new profile →</button>
     <p class="muted small">Your name is saved with your profile — in this browser, and in Drive when you sync — so you never have to type it again.</p>
   </div>
 </div>
@@ -38,6 +45,7 @@
       </div>
     </div>
     <div class="top-actions">
+      <button class="btn ghost" id="refreshAppBtn" type="button" title="Get the latest version — your data stays safe, nothing is cleared">↻ Latest version</button>
       <button class="btn ghost" id="sampleBtn" type="button">✦ Load sample data</button>
       <button class="btn ghost" id="exportBtn" type="button">↓ Export</button>
       <label class="btn ghost file-btn">↑ Import <input type="file" id="importFile" accept=".json" hidden></label>
@@ -59,6 +67,11 @@
       </div>
     </div>
     <div class="profile-fields">
+      <div>
+        <label>Profile</label>
+        <select id="profileSelect"></select>
+        <button class="btn ghost small" id="newProfileBtn" type="button" style="margin-top:6px">+ New profile</button>
+      </div>
       <div>
         <label>Currency</label>
         <select id="currency"><option value="USD">$ USD</option><option value="INR">₹ INR</option><option value="EUR">€ EUR</option><option value="GBP">£ GBP</option></select>
@@ -180,7 +193,7 @@
     </div>
   </section>
 
-  <footer class="muted small center">Money Profile • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
+  <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
 <script src="app.js"></script>
 </body>
