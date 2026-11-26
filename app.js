@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.4';
+const APP_VERSION = '2026-11-26.5';
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
 const EXPENSE_KEYS = [['housing','Housing'],['food','Food'],['transport','Transport'],['subs','Subscriptions'],['shopping','Shopping'],['fun','Fun / Eating out'],['health','Health'],['other','Other']];
@@ -351,6 +351,23 @@ async function doLogout(){
 $('logoutBtn').onclick=doLogout;
 $('pickerLogout').onclick=doLogout;
 (()=>{ const el=$('footerVersion'); if(el) el.textContent = 'Version ' + APP_VERSION + ' • Tap “↻ Latest version” at the top to get the newest app'; })();
+// Auto update check: if the server has a newer app.js than the one this
+// browser cached, show a banner — tapping it reloads to the new version.
+// This is what stops a phone getting stuck on an old version.
+setTimeout(async ()=>{
+  try{
+    const r = await fetch('app.js?check=' + Date.now(), { cache:'no-store' });
+    const t = await r.text();
+    const m = t.match(/APP_VERSION = '([^']+)'/);
+    if(m && m[1] !== APP_VERSION){
+      const b = document.createElement('div');
+      b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#22c55e;color:#052e16;font-weight:700;border-radius:12px;padding:14px 16px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4);cursor:pointer';
+      b.textContent = 'New version ' + m[1] + ' is available — tap here to update';
+      b.onclick = ()=>{ location.href = location.pathname + '?v=' + Date.now() + '&welcome=1'; };
+      document.body.appendChild(b);
+    }
+  }catch(e){ /* offline — ignore */ }
+}, 2000);
 
 // Default month = current month
 (()=>{ const d=new Date(); $('fMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render(); updateLive(); })();
