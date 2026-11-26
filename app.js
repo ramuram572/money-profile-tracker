@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.5';
+const APP_VERSION = '2026-11-26.6';
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
 const EXPENSE_KEYS = [['housing','Housing'],['food','Food'],['transport','Transport'],['subs','Subscriptions'],['shopping','Shopping'],['fun','Fun / Eating out'],['health','Health'],['other','Other']];
@@ -14,14 +14,14 @@ function load(){
   try{
     const d = JSON.parse(localStorage.getItem(KEY));
     if(d && Array.isArray(d.profiles)){
-      d.profiles.forEach((p,i)=>{ if(!p.id) p.id='p'+(i+1); if(!Array.isArray(p.entries)) p.entries=[]; if(!p.currency) p.currency='USD'; if(p.goal==null) p.goal=20; });
+      d.profiles.forEach((p,i)=>{ if(!p.id) p.id='p'+(i+1); if(!Array.isArray(p.entries)) p.entries=[]; if(!p.currency) p.currency='USD'; if(p.goal==null) p.goal=20; if(!Array.isArray(p.goals)) p.goals=[]; if(!p.budgets) p.budgets={}; });
       if(!d.currentProfileId || !d.profiles.find(p=>p.id===d.currentProfileId)) d.currentProfileId = d.profiles[0] ? d.profiles[0].id : null;
       return d;
     }
     // Legacy single-profile format (profile + entries) → migrate to profiles
     if(d && Array.isArray(d.entries)){
       const p = d.profile || {name:'',currency:'USD',goal:20};
-      const prof = { id:'p1', name:p.name||'', currency:p.currency||'USD', goal:p.goal||20, entries:d.entries };
+      const prof = { id:'p1', name:p.name||'', currency:p.currency||'USD', goal:p.goal||20, entries:d.entries, goals:[], budgets:{} };
       return { profiles:[prof], currentProfileId:'p1' };
     }
   }catch(e){}
@@ -38,6 +38,51 @@ function surplus(e){ return (Number(e.income)||0) - totalSpend(e); }
 function netWorth(e){ return (Number(e.assets)||0) - (Number(e.debts)||0); }
 function rate(e){ return e.income ? surplus(e)/e.income*100 : 0; }
 function monthLabel(m){ const [y,mo]=m.split('-'); return new Date(+y, +mo-1, 1).toLocaleDateString('en-US',{month:'short', year:'numeric'}); }
+
+function streakCount(entries){ let s=0; for(let i=entries.length-1;i>=0;i--){ if(surplus(entries[i])>=0) s++; else break; } return s; }
+function celebrate(){ if(typeof confetti!=='undefined') confetti({particleCount:140,spread:80,origin:{y:.6},colors:['#22c55e','#6366f1','#f59e0b','#ec4899']}); }
+function animateNum(el, target){ const start=performance.now(), from=0, dur=700; const step=(t)=>{ const k=Math.min(1,(t-start)/dur); el.textContent = money(from+(target-from)*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); }
+function renderInsights(entries){
+  const p=prof(); if(!p) return;
+  const streak=streakCount(entries);
+  $('streakPill').textContent = streak? `🔥 ${streak} green month${streak>1?'s':''} in a row` : 'No streak yet — make this month green';
+  if(!entries.length){ $('insightText').textContent='Add a month to see your insight.'; $('insightTip').textContent=''; $('badgeRow').innerHTML=''; return; }
+  const last=entries[entries.length-1], prev=entries[entries.length-2];
+  const s=surplus(last), r=rate(last), nw=netWorth(last);
+  const best=entries.reduce((a,b)=>surplus(b)>surplus(a)?b:a);
+  const cat=EXPENSE_KEYS.map(([k,l])=>[l,last.expenses[k]||0]).sort((a,b)=>b[1]-a[1])[0];
+  $('insightText').textContent = `${monthLabel(last.month)}: you ${s>=0?'kept':'lost'} ${money(Math.abs(s))} (${r.toFixed(1)}% saved). Net worth ${money(nw)}${prev?`, ${nw>=netWorth(prev)?'up':'down'} ${money(Math.abs(nw-netWorth(prev)))} vs last month`:''}. Biggest spend: ${cat[0]} ${money(cat[1])}. Best month so far: ${monthLabel(best.month)} (+${money(surplus(best))}).`;
+  $('insightTip').textContent = s<0 ? '💡 Tip: cut your biggest category by 10% next month and this turns green.' : r < p.goal ? `💡 Tip: you're below your ${p.goal}% goal — try saving ${money(last.income*p.goal/100 - (last.saved||0))} more next month.` : '💡 Tip: you beat your goal — put the extra into your top savings goal below.';
+  const greenTotal=entries.filter(e=>surplus(e)>=0).length;
+  const badges=[
+    [entries.length>=1,'🎉 First month','First month'],
+    [greenTotal>=3,'🥉 3 green months','3 green months'],
+    [streak>=3,'🔥 3-month streak','3-month streak'],
+    [nw>=10000,'💰 $10k net worth','$10k net worth'],
+    [(last.debts||0)===0,'🕊️ Debt-free month','Debt-free month'],
+    [r>=30,'⭐ 30% saver','30% saver'],
+  ];
+  $('badgeRow').innerHTML = badges.map(([got,label,locked])=>`<span class="badge-chip ${got?'':'locked'}">${got?label:'🔒 '+locked}</span>`).join('');
+}
+function renderGoals(){
+  const p=prof(); if(!p) return;
+  $('goalList').innerHTML = p.goals.length ? p.goals.map(g=>{
+    const pct=Math.min(100, Math.round((g.saved||0)/g.target*100));
+    return `<div class="goal-item"><div class="goal-top"><span>🎯 ${g.name}</span><span>${money(g.saved||0)} / ${money(g.target)}</span></div><div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div><div style="display:flex;gap:6px;align-items:center"><span class="muted small">${pct}% there ${pct>=100?'🎉 Goal reached!':''}</span><button class="btn ghost small" data-goal-add="${g.id}" type="button">+ $100</button><button class="btn ghost small" data-goal-del="${g.id}" type="button">🗑</button></div></div>`;
+  }).join('') : '<p class="muted">No goals yet — add one below, e.g. Vacation $2,000.</p>';
+  $('goalList').querySelectorAll('[data-goal-add]').forEach(b=>b.onclick=()=>{ const g=p.goals.find(x=>x.id===b.dataset.goalAdd); g.saved=(g.saved||0)+100; save(); render(); if(g.saved>=g.target) celebrate(); });
+  $('goalList').querySelectorAll('[data-goal-del]').forEach(b=>b.onclick=()=>{ if(confirm('Delete this goal?')){ p.goals=p.goals.filter(x=>x.id!==b.dataset.goalDel); save(); render(); } });
+}
+function renderBudgets(){
+  const p=prof(); if(!p) return;
+  const entries=sorted(); const last=entries[entries.length-1];
+  $('budgetList').innerHTML = EXPENSE_KEYS.map(([k,l])=>{
+    const actual=last? (last.expenses[k]||0):0; const bud=p.budgets[k]||'';
+    const over=bud && actual>bud;
+    return `<div class="budget-row"><span>${l} ${last?`<span class="${over?'red-text':'green-text'}">${money(actual)}</span>`:''}</span><input type="number" min="0" placeholder="Budget $" value="${bud}" data-budget="${k}"><span class="muted small">${bud? (over?'🔴 over by '+money(actual-bud):'🟢 under by '+money(bud-actual)) : '—'}</span></div>`;
+  }).join('');
+  $('budgetList').querySelectorAll('[data-budget]').forEach(inp=>inp.addEventListener('change', e=>{ const v=parseFloat(e.target.value)||0; if(v) p.budgets[e.target.dataset.budget]=v; else delete p.budgets[e.target.dataset.budget]; save(); render(); }));
+}
 
 function render(){
   const p = prof();
@@ -56,6 +101,12 @@ function render(){
   $('avatarInitial').textContent = p && p.name ? p.name[0].toUpperCase() : '?';
   $('currency').value = p ? p.currency : 'USD';
   $('savingsGoal').value = p ? p.goal : 20;
+  renderInsights(entries); renderGoals(); renderBudgets();
+  // Payday reminder: first week of the month, no entry yet for this month
+  const now=new Date(); const curMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const hasCur=entries.some(e=>e.month===curMonth);
+  $('paydayBanner').hidden = !(p && !hasCur && now.getDate()<=7);
+  if(p && !hasCur && now.getDate()<=7) $('paydayText').textContent = `Payday week, ${p.name||'friend'} — add ${monthLabel(curMonth)} so your graphs stay fresh.`;
   $('monthsCount').textContent = entries.length;
   $('profileSub').textContent = entries.length ? `Monthly money profile • ${entries.length} month${entries.length>1?'s':''} tracked • Data stays in your browser` : 'Monthly money profile • All data stays in your browser';
 
@@ -79,6 +130,7 @@ function render(){
     $('statNetWorth').textContent = money(nw);
     $('statNetWorth').className = nw>=0?'green-text':'red-text';
     $('statInvested').textContent = money(last.saved||0);
+    animateNum($('statIncome'), last.income); animateNum($('statSpend'), totalSpend(last)); animateNum($('statNetWorth'), nw);
     const delta = (a,b)=> prev? ((a-b)/Math.abs(b||1)*100) : null;
     const dInc = prev? last.income-prev.income : null, dSpend = prev? totalSpend(last)-totalSpend(prev) : null, dNw = prev? nw-netWorth(prev) : null;
     $('statIncomeDelta').textContent = dInc==null?'First month':`${dInc>=0?'▲ +':'▼ '}${money(Math.abs(dInc))} vs last month`;
@@ -156,6 +208,7 @@ $('monthForm').addEventListener('submit', ev=>{
   const idx=pr.entries.findIndex(e=>e.month===month);
   if(idx>=0){ pr.entries[idx]=entry; alert(monthLabel(month)+' updated.'); } else pr.entries.push(entry);
   save(); render(); ev.target.reset(); $('fMonth').value=month; updateLive();
+  if(surplus(entry)>=0){ celebrate(); const st=streakCount(sorted()); if(st===3||st===6) setTimeout(()=>alert(`🔥 ${st} green months in a row — amazing streak, ${prof().name||'friend'}!`), 600); }
 });
 $('clearFormBtn').onclick=()=>{ $('monthForm').reset(); updateLive(); };
 document.querySelectorAll('.exp, #fIncome').forEach(i=>i.addEventListener('input', updateLive));
@@ -368,6 +421,35 @@ setTimeout(async ()=>{
     }
   }catch(e){ /* offline — ignore */ }
 }, 2000);
+
+// Goals
+$('goalForm').addEventListener('submit', e=>{ e.preventDefault(); const pr=prof(); if(!pr) return; const name=$('goalName').value.trim(); const target=parseFloat($('goalTarget').value)||0; if(!name||!target) return; pr.goals.push({id:'g'+Date.now(), name, target, saved:0}); save(); render(); e.target.reset(); });
+// Theme — light / dark, remembered in this browser
+function applyTheme(t){ document.documentElement.setAttribute('data-theme', t); localStorage.setItem('moneyProfileTheme', t); $('themeBtn').textContent = t==='light' ? '🌙 Dark' : '☀️ Light'; }
+$('themeBtn').onclick=()=>{ applyTheme(document.documentElement.getAttribute('data-theme')==='light' ? 'dark' : 'light'); };
+applyTheme(localStorage.getItem('moneyProfileTheme') || 'dark');
+// Payday banner
+$('paydayAddBtn').onclick=()=>{ $('formCard').scrollIntoView({behavior:'smooth'}); $('fIncome').focus(); };
+// Share my month — draw a pretty card image and download / share it
+$('shareBtn').onclick=async ()=>{
+  const p=prof(); const entries=sorted(); if(!entries.length){ alert('Add a month first, then share it.'); return; }
+  const last=entries[entries.length-1]; const s=surplus(last), r=rate(last);
+  const c=document.createElement('canvas'); c.width=1080; c.height=1080; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,1080,1080); g.addColorStop(0,'#0f172a'); g.addColorStop(1,'#312e81'); x.fillStyle=g; x.fillRect(0,0,1080,1080);
+  x.fillStyle='#22c55e'; x.font='900 90px Inter, sans-serif'; x.fillText(s>=0?'💚 GREEN MONTH':'🔴 RED MONTH', 70, 160);
+  x.fillStyle='#fff'; x.font='800 64px Inter, sans-serif'; x.fillText((p.name||'My') + ' Money Profile', 70, 260);
+  x.fillStyle='#94a3b8'; x.font='500 44px Inter, sans-serif'; x.fillText(monthLabel(last.month), 70, 330);
+  x.fillStyle='#fff'; x.font='900 120px Inter, sans-serif'; x.fillText((s>=0?'+':'−') + money(Math.abs(s)), 70, 500);
+  x.font='600 48px Inter, sans-serif'; x.fillStyle='#a5b4fc'; x.fillText('Surplus  •  ' + r.toFixed(1) + '% saved', 70, 580);
+  x.fillText('Net worth  ' + money(netWorth(last)), 70, 660);
+  x.fillStyle='#22c55e'; x.font='700 40px Inter, sans-serif'; x.fillText('🔥 ' + streakCount(entries) + ' green month streak  •  Made with Money Profile', 70, 980);
+  c.toBlob(async (blob)=>{ const file=new File([blob],'money-profile-month.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){ try{ await navigator.share({files:[file], text:'My money month'}); return; }catch(e){} }
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='money-profile-'+last.month+'.png'; a.click();
+  }, 'image/png');
+};
+// PDF report — print view, save as PDF from the print dialog
+$('pdfBtn').onclick=()=>window.print();
 
 // Default month = current month
 (()=>{ const d=new Date(); $('fMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render(); updateLive(); })();

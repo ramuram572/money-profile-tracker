@@ -9,8 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="styles.css?v=2026-11-26.5" />
+<link rel="stylesheet" href="styles.css?v=2026-11-26.6" />
 </head>
 <body>
 <!-- WELCOME / ONBOARDING -->
@@ -62,6 +63,7 @@
       <button class="btn ghost" id="refreshAppBtn" type="button" title="Get the latest version, then pick a profile — your data stays safe, nothing is cleared">↻ Latest version</button>
       <button class="btn ghost" id="switchProfileBtn" type="button" title="Go back to the welcome page — use an existing profile or create a new one">👤 Switch profile</button>
       <button class="btn ghost" id="logoutBtn" type="button" title="Log out — back to the welcome page, Drive disconnected, your data stays saved">⎋ Logout</button>
+      <button class="btn ghost" id="themeBtn" type="button" title="Switch light / dark theme">☀️ Light</button>
       <button class="btn ghost" id="sampleBtn" type="button">✦ Load sample data</button>
       <button class="btn ghost" id="exportBtn" type="button">↓ Export</button>
       <label class="btn ghost file-btn">↑ Import <input type="file" id="importFile" accept=".json" hidden></label>
@@ -130,6 +132,39 @@
       <p id="verdictText">Enter income, spending, savings and net worth once a month. Green means you're ahead. Red means spending beat income, or net worth fell.</p>
     </div>
     <div class="verdict-score"><span id="verdictScore">—</span><small>latest month</small></div>
+  </section>
+
+  <div id="paydayBanner" class="payday-banner" hidden>🎉 <span id="paydayText"></span> <button class="btn primary small" id="paydayAddBtn" type="button">Add this month →</button></div>
+
+  <!-- INSIGHTS + STREAK + BADGES -->
+  <section class="two-col">
+    <div class="card">
+      <div class="card-head"><div><h3>💡 This month, in plain English</h3><p id="insightSub">Your smart summary</p></div><span class="pill" id="streakPill">—</span></div>
+      <p id="insightText" class="insight-text">Add a month to see your insight.</p>
+      <p id="insightTip" class="muted"></p>
+      <div id="badgeRow" class="badge-row"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div><h3>🎯 Savings goals</h3><p>What are you saving for?</p></div></div>
+      <div id="goalList" class="goal-list"></div>
+      <form id="goalForm" class="goal-form">
+        <input id="goalName" placeholder="e.g. Vacation" maxlength="30" required>
+        <input id="goalTarget" type="number" min="1" step="1" placeholder="Target $" required>
+        <button class="btn primary" type="submit">+ Add goal</button>
+      </form>
+      <h4 style="margin-top:16px">Monthly budget — by category</h4>
+      <p class="muted small">Set a budget, then see green when you're under it.</p>
+      <div id="budgetList" class="budget-list"></div>
+    </div>
+  </section>
+
+  <!-- SHARE + REPORT -->
+  <section class="card share-card">
+    <div><h3>📣 Share your win</h3><p class="muted">Made a green month? Share it, or save a PDF report.</p></div>
+    <div class="drive-actions">
+      <button class="btn primary" id="shareBtn" type="button">💚 Share my month — image</button>
+      <button class="btn ghost" id="pdfBtn" type="button">📄 Monthly PDF report</button>
+    </div>
   </section>
 
   <!-- STATS -->
@@ -211,6 +246,6 @@
 
   <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
-<script src="app.js?v=2026-11-26.5"></script>
+<script src="app.js?v=2026-11-26.6"></script>
 </body>
 </html>
