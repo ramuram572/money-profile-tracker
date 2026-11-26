@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.11';
+const APP_VERSION = '2026-11-26.12';
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
 const EXPENSE_KEYS = [['housing','Housing'],['food','Food'],['transport','Transport'],['subs','Subscriptions'],['shopping','Shopping'],['fun','Fun / Eating out'],['health','Health'],['other','Other']];
@@ -14,14 +14,14 @@ function load(){
   try{
     const d = JSON.parse(localStorage.getItem(KEY));
     if(d && Array.isArray(d.profiles)){
-      d.profiles.forEach((p,i)=>{ if(!p.id) p.id='p'+(i+1); if(!Array.isArray(p.entries)) p.entries=[]; if(!p.currency) p.currency='USD'; if(p.goal==null) p.goal=20; if(!Array.isArray(p.goals)) p.goals=[]; if(!p.budgets) p.budgets={}; if(!p.uiCollapsed) p.uiCollapsed={}; });
+      d.profiles.forEach((p,i)=>{ if(!p.id) p.id='p'+(i+1); if(!Array.isArray(p.entries)) p.entries=[]; if(!p.currency) p.currency='USD'; if(p.goal==null) p.goal=20; if(!Array.isArray(p.goals)) p.goals=[]; if(!p.budgets) p.budgets={}; if(!p.uiCollapsed) p.uiCollapsed={}; if(!Array.isArray(p.bills)) p.bills=[]; if(!Array.isArray(p.investments)) p.investments=[]; if(!Array.isArray(p.challenges)) p.challenges=[]; });
       if(!d.currentProfileId || !d.profiles.find(p=>p.id===d.currentProfileId)) d.currentProfileId = d.profiles[0] ? d.profiles[0].id : null;
       return d;
     }
     // Legacy single-profile format (profile + entries) → migrate to profiles
     if(d && Array.isArray(d.entries)){
       const p = d.profile || {name:'',currency:'USD',goal:20};
-      const prof = { id:'p1', name:p.name||'', currency:p.currency||'USD', goal:p.goal||20, entries:d.entries, goals:[], budgets:{}, uiCollapsed:{} };
+      const prof = { id:'p1', name:p.name||'', currency:p.currency||'USD', goal:p.goal||20, entries:d.entries, goals:[], budgets:{}, uiCollapsed:{}, bills:[], investments:[], challenges:[] };
       return { profiles:[prof], currentProfileId:'p1' };
     }
   }catch(e){}
@@ -63,6 +63,33 @@ function renderInsights(entries){
     [r>=30,'⭐ 30% saver','30% saver'],
   ];
   $('badgeRow').innerHTML = badges.map(([got,label,locked])=>`<span class="badge-chip ${got?'':'locked'}">${got?label:'🔒 '+locked}</span>`).join('');
+}
+function renderBillsInvest(){
+  const p=prof(); if(!p) return;
+  const now=new Date(); const day=now.getDate();
+  $('billList').innerHTML = p.bills.length ? p.bills.map(b=>{
+    const dueIn = b.day>=day ? b.day-day : b.day+30-day;
+    const paid = b.paidMonth === `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    return `<div class="goal-item"><div class="goal-top"><span>${paid?'✅':'🧾'} ${b.name}</span><span>${money(b.amount)} • due day ${b.day} ${paid?'(paid)':`(${dueIn}d)`}</span></div><div style="margin-top:6px"><button class="btn ghost small" data-bill-pay="${b.id}" type="button">${paid?'Mark unpaid':'Mark paid ✓'}</button> <button class="btn ghost small" data-bill-del="${b.id}" type="button">🗑</button></div></div>`;
+  }).join('') : '<p class="muted">No bills yet — add rent, EMI or a subscription above.</p>';
+  $('billList').querySelectorAll('[data-bill-pay]').forEach(b=>b.onclick=()=>{ const x=p.bills.find(y=>y.id===b.dataset.billPay); const m=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`; x.paidMonth = x.paidMonth===m ? '' : m; save(); render(); });
+  $('billList').querySelectorAll('[data-bill-del]').forEach(b=>b.onclick=()=>{ if(confirm('Delete this bill?')){ p.bills=p.bills.filter(y=>y.id!==b.dataset.billDel); save(); render(); } });
+  const invTotal=p.investments.reduce((s,x)=>s+(x.value||0),0);
+  $('investTotal').textContent=money(invTotal);
+  const entries=sorted(); const last=entries[entries.length-1];
+  $('investNetWorth').textContent = last ? 'Net worth incl. investments: ' + money(netWorth(last)+invTotal) : '';
+  $('investList').innerHTML = p.investments.length ? p.investments.map(x=>`<div class="goal-item"><div class="goal-top"><span>📈 ${x.name} <span class="muted small">${x.type}</span></span><span>${money(x.value)}</span></div><button class="btn ghost small" data-inv-del="${x.id}" type="button">🗑</button></div>`).join('') : '<p class="muted">No investments yet.</p>';
+  $('investList').querySelectorAll('[data-inv-del]').forEach(b=>b.onclick=()=>{ p.investments=p.investments.filter(y=>y.id!==b.dataset.invDel); save(); render(); });
+  const challenges=[
+    {id:'c500', name:'Save $500 this month', target:500, prog: last? Math.max(0,surplus(last)) : 0},
+    {id:'c3green', name:'3 green months in a row', target:3, prog: streakCount(entries)},
+    {id:'c10k', name:'Reach $10,000 net worth', target:10000, prog: last? netWorth(last) : 0},
+  ];
+  $('challengeList').innerHTML = challenges.map(c=>{
+    const joined=p.challenges.includes(c.id); const pct=Math.min(100, Math.round(c.prog/c.target*100));
+    return `<div class="goal-item"><div class="goal-top"><span>🏆 ${c.name}</span><span>${c.target>=10000?money(c.prog)+' / '+money(c.target):c.prog+' / '+c.target}</span></div><div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div><button class="btn ghost small" data-chal="${c.id}" type="button">${joined?'Joined ✓ — tap to leave':'Join challenge'}</button></div>`;
+  }).join('');
+  $('challengeList').querySelectorAll('[data-chal]').forEach(b=>b.onclick=()=>{ const id=b.dataset.chal; p.challenges = p.challenges.includes(id) ? p.challenges.filter(x=>x!==id) : [...p.challenges, id]; save(); render(); });
 }
 function renderGoals(){
   const p=prof(); if(!p) return;
@@ -144,7 +171,13 @@ function render(){
   $('avatarInitial').textContent = p && p.name ? p.name[0].toUpperCase() : '?';
   $('currency').value = p ? p.currency : 'USD';
   $('savingsGoal').value = p ? p.goal : 20;
-  renderInsights(entries); renderGoals(); renderBudgets(); applyCollapse();
+  renderInsights(entries); renderGoals(); renderBudgets(); renderBillsInvest(); applyCollapse();
+  // Smart coach + yearly projection
+  if(entries.length){
+    const avgSurplus = entries.reduce((s,e)=>s+surplus(e),0)/entries.length;
+    const now=new Date(); const monthsLeft = 12-now.getMonth();
+    $('insightTip').textContent += ` 📈 Coach: at your average surplus of ${money(avgSurplus)}/mo, you could save about ${money(Math.max(0,avgSurplus*monthsLeft))} more by December.`;
+  }
   // Payday reminder: first week of the month, no entry yet for this month
   const now=new Date(); const curMonth=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const hasCur=entries.some(e=>e.month===curMonth);
@@ -527,7 +560,7 @@ $('pdfBtn').onclick=()=>window.print();
 
 // Expand all / Collapse all — on top, saves the state per profile like the
 // individual + / − buttons do, so it comes back the same next login.
-const ALL_SECTIONS = ['profile','drive','verdict','insights','goals','share','chart-income','chart-networth','chart-breakdown','chart-savings','form','history'];
+const ALL_SECTIONS = ['profile','drive','verdict','insights','goals','share','chart-income','chart-networth','chart-breakdown','chart-savings','form','history','quick','invest'];
 function setAllCollapsed(collapsed){
   const p=prof(); if(!p) return;
   if(!p.uiCollapsed) p.uiCollapsed={};
@@ -545,6 +578,69 @@ document.querySelectorAll('[data-section]').forEach(sec=>{
 });
 // Drive + / − : + expands, − minimises (same saved state as every other box)
 $('driveExpandBtn').onclick=()=>{ const p=prof(); if(p){ if(!p.uiCollapsed) p.uiCollapsed={}; p.uiCollapsed.drive=false; save(); applyCollapse(); } };
+
+// Why / Household / Year in review
+$('whyBtn').onclick=()=>{ $('whyOverlay').hidden=false; };
+$('whyClose').onclick=()=>{ $('whyOverlay').hidden=true; };
+$('whyTryBtn').onclick=()=>{ $('whyOverlay').hidden=true; welcomeOpen=true; render(); };
+$('householdBtn').onclick=()=>{
+  const totals=state.profiles.map(p=>{
+    const es=[...p.entries].sort((a,b)=>a.month.localeCompare(b.month)); const last=es[es.length-1];
+    return last ? {name:p.name, income:last.income, spend:totalSpend(last), surplus:surplus(last), nw:netWorth(last)} : null;
+  }).filter(Boolean);
+  const sum=k=>totals.reduce((s,x)=>s+x[k],0);
+  $('householdBody').innerHTML = totals.length ? `<p><strong>${totals.length} profile(s)</strong></p><p>Income: ${money(sum('income'))}<br>Spending: ${money(sum('spend'))}<br>Surplus: ${money(sum('surplus'))}<br>Net worth: ${money(sum('nw'))}</p>` + totals.map(x=>`<p>${x.name}: surplus ${money(x.surplus)}, net worth ${money(x.nw)}</p>`).join('') : '<p class="muted">No profiles with months yet.</p>';
+  $('householdOverlay').hidden=false;
+};
+$('householdClose').onclick=()=>{ $('householdOverlay').hidden=true; };
+$('yearBtn').onclick=()=>{
+  const p=prof(); const entries=sorted(); const year=new Date().getFullYear();
+  const y=entries.filter(e=>e.month.startsWith(String(year)));
+  const tot=k=>y.reduce((s,e)=>s+e[k],0); const spend=y.reduce((s,e)=>s+totalSpend(e),0); const surv=y.reduce((s,e)=>s+surplus(e),0);
+  const best=y.reduce((a,b)=>!a||surplus(b)>surplus(a)?b:a,null);
+  $('yearBody').innerHTML = y.length ? `<p><strong>${year} so far — ${y.length} month(s)</strong></p><p>Total income: ${money(tot('income'))}<br>Total spent: ${money(spend)}<br>Total saved: ${money(surv)}<br>Green months: ${y.filter(e=>surplus(e)>=0).length}/${y.length}<br>Best month: ${best?monthLabel(best.month)+' (+'+money(surplus(best))+')':'—'}</p>` : '<p class="muted">Add months this year to see your year in review.</p>';
+  $('yearOverlay').hidden=false;
+};
+$('yearClose').onclick=()=>{ $('yearOverlay').hidden=true; };
+$('yearShareBtn').onclick=()=>{ $('yearOverlay').hidden=true; $('shareBtn').click(); };
+// Quick expense — adds to this month's entry
+$('quickForm').addEventListener('submit', e=>{
+  e.preventDefault(); const pr=prof(); if(!pr){ alert('Create a profile first.'); return; }
+  const amt=parseFloat($('quickAmount').value)||0; const cat=$('quickCat').value; if(!amt) return;
+  const now=new Date(); const month=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  let entry=pr.entries.find(x=>x.month===month);
+  if(!entry){ entry={month, income:0, saved:0, assets:0, debts:0, expenses:{housing:0,food:0,transport:0,subs:0,shopping:0,fun:0,health:0,other:0}}; pr.entries.push(entry); }
+  entry.expenses[cat]=(entry.expenses[cat]||0)+amt; save(); render(); e.target.reset();
+  alert(`Added ${money(amt)} to ${cat} for ${monthLabel(month)}.`);
+});
+// Voice entry (Web Speech API, if the browser supports it)
+$('voiceBtn').onclick=()=>{
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ $('voiceStatus').textContent='Voice not supported in this browser — type it instead.'; return; }
+  const r=new SR(); r.lang='en-US'; $('voiceStatus').textContent='Listening… say e.g. "spent 40 on food"';
+  r.onresult=(ev)=>{ const txt=ev.results[0][0].transcript; $('voiceStatus').textContent='Heard: "'+txt+'"';
+    const amt=parseFloat(txt.replace(/[^0-9.]/g,''))||0;
+    const cat = /food|grocer|eat|restaurant/i.test(txt)?'food':/transport|fuel|uber|taxi/i.test(txt)?'transport':/shop|cloth/i.test(txt)?'shopping':/movie|fun/i.test(txt)?'fun':'other';
+    if(amt){ $('quickAmount').value=amt; $('quickCat').value=cat; $('voiceStatus').textContent+=' — filled in, tap Add.'; } };
+  r.onerror=()=>{ $('voiceStatus').textContent='Could not hear — try again.'; };
+  r.start();
+};
+$('receiptFile').addEventListener('change', e=>{ const f=e.target.files[0]; if(f) $('receiptNote').textContent='📸 Receipt attached: '+f.name+' — add the amount above to record it.'; });
+// Bills / Investments / Suggest budgets / Excel
+$('billForm').addEventListener('submit', e=>{ e.preventDefault(); const pr=prof(); if(!pr) return; pr.bills.push({id:'b'+Date.now(), name:$('billName').value.trim(), amount:parseFloat($('billAmount').value)||0, day:parseInt($('billDay').value)||1, paidMonth:''}); save(); render(); e.target.reset(); });
+$('investForm').addEventListener('submit', e=>{ e.preventDefault(); const pr=prof(); if(!pr) return; pr.investments.push({id:'i'+Date.now(), name:$('investName').value.trim(), type:$('investType').value, value:parseFloat($('investValue').value)||0}); save(); render(); e.target.reset(); });
+$('suggestBudgetBtn').onclick=()=>{
+  const pr=prof(); if(!pr) return; const entries=sorted().slice(-3); if(!entries.length){ alert('Add a month first.'); return; }
+  EXPENSE_KEYS.forEach(([k])=>{ pr.budgets[k]=Math.round(entries.reduce((s,e)=>s+(e.expenses[k]||0),0)/entries.length); });
+  save(); render(); alert('Budgets suggested from your last 3 months average.');
+};
+$('excelBtn').onclick=()=>{
+  const pr=prof(); const entries=sorted(); if(!entries.length){ alert('Add a month first.'); return; }
+  const rows=[['Month','Income','Spent','Surplus','Net worth','Saved']];
+  entries.forEach(e=>rows.push([e.month, e.income, totalSpend(e), surplus(e), netWorth(e), e.saved||0]));
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='money-profile.csv'; a.click();
+};
 
 // Default month = current month
 (()=>{ const d=new Date(); $('fMonth').value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; render(); updateLive(); })();

@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#16a34a" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <title>Money Profile — Your Monthly Money, Clearly</title>
@@ -11,7 +14,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="styles.css?v=2026-11-26.11" />
+<link rel="stylesheet" href="styles.css?v=2026-11-26.12" />
 </head>
 <body>
 <!-- WELCOME / ONBOARDING -->
@@ -35,6 +38,37 @@
     </label>
     <button class="btn primary big" id="welcomeStart" type="button">Create new profile →</button>
     <p class="muted small">Your name is saved with your profile — in this browser, and in Drive when you sync — so you never have to type it again.</p>
+  </div>
+</div>
+
+<!-- WHY THIS APP -->
+<div class="welcome-overlay" id="whyOverlay" hidden>
+  <div class="welcome-card" style="max-width:560px;text-align:left">
+    <h2>Why Money Profile?</h2>
+    <p>✅ <strong>One entry a month.</strong> No daily tracking, no burnout — enter once after payday.</p>
+    <p>💬 <strong>Plain English, not spreadsheets.</strong> "You kept $1,200 — your best yet" plus a tip.</p>
+    <p>🔒 <strong>Private by design.</strong> No account, no ads, no selling your data. Numbers live in your browser and your own Drive file.</p>
+    <p>📱 <strong>Any device.</strong> Connect Drive, Load, and your history is there.</p>
+    <p>👨‍👩‍👧 <strong>For the whole family.</strong> Each person gets their own profile, goals and graphs.</p>
+    <p>🎉 <strong>Saving feels good.</strong> Confetti, streaks, badges and goals — saving stops feeling like a chore.</p>
+    <button class="btn primary big" id="whyTryBtn" type="button">Try it — no sign-up →</button>
+    <button class="btn ghost" id="whyClose" type="button" style="margin-top:8px">Close</button>
+  </div>
+</div>
+<div class="welcome-overlay" id="householdOverlay" hidden>
+  <div class="welcome-card" style="max-width:560px;text-align:left">
+    <h2>👨‍👩‍👧 Household total</h2>
+    <p class="muted">All profiles together — latest month each.</p>
+    <div id="householdBody"></div>
+    <button class="btn ghost" id="householdClose" type="button" style="margin-top:8px">Close</button>
+  </div>
+</div>
+<div class="welcome-overlay" id="yearOverlay" hidden>
+  <div class="welcome-card" style="max-width:560px;text-align:left">
+    <h2>📅 My year in review</h2>
+    <div id="yearBody"></div>
+    <button class="btn primary" id="yearShareBtn" type="button">💚 Share my year</button>
+    <button class="btn ghost" id="yearClose" type="button" style="margin-top:8px">Close</button>
   </div>
 </div>
 
@@ -65,6 +99,9 @@
       <button class="btn ghost" id="logoutBtn" type="button" title="Log out — back to the welcome page, Drive disconnected, your data stays saved">⎋ Logout</button>
       <button class="btn ghost" id="themeBtn" type="button" title="Switch light / dark theme">☀️ Light</button>
       <button class="btn ghost" id="expandAllBtn" type="button" title="Expand all boxes">＋ Expand all</button>
+      <button class="btn ghost" id="whyBtn" type="button">✨ Why this app?</button>
+      <button class="btn ghost" id="householdBtn" type="button">👨‍👩‍👧 Household</button>
+      <button class="btn ghost" id="yearBtn" type="button">📅 Year in review</button>
       <button class="btn ghost" id="collapseAllBtn" type="button" title="Collapse all boxes">− Collapse all</button>
       <button class="btn ghost" id="sampleBtn" type="button">✦ Load sample data</button>
       <button class="btn ghost" id="exportBtn" type="button">↓ Export</button>
@@ -187,6 +224,48 @@
     </div>
   </section>
 
+  <!-- QUICK ADD + BILLS + INVESTMENTS + CHALLENGES -->
+  <section class="two-col">
+    <div class="card" data-section="quick">
+      <div class="card-head"><div><h3>⚡ Quick expense</h3><p>Spent something? Add it in 5 seconds.</p></div><button class="collapse-btn" data-collapse="quick" type="button">−</button></div>
+      <form id="quickForm" class="goal-form">
+        <input id="quickAmount" type="number" min="0" step="0.01" placeholder="$ amount" required>
+        <select id="quickCat"><option value="food">Food</option><option value="transport">Transport</option><option value="shopping">Shopping</option><option value="fun">Fun / Eating out</option><option value="housing">Housing</option><option value="subs">Subscriptions</option><option value="health">Health</option><option value="other">Other</option></select>
+        <button class="btn primary" type="submit">Add</button>
+      </form>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn ghost" id="voiceBtn" type="button">🎤 Speak it</button>
+        <label class="btn ghost">📸 Receipt <input type="file" id="receiptFile" accept="image/*" hidden></label>
+        <span class="muted small" id="voiceStatus"></span>
+      </div>
+      <p class="muted small" id="receiptNote"></p>
+      <h4 style="margin-top:16px">🧾 Bills due</h4>
+      <div id="billList" class="goal-list"></div>
+      <form id="billForm" class="goal-form">
+        <input id="billName" placeholder="e.g. Rent" maxlength="30" required>
+        <input id="billAmount" type="number" min="0" placeholder="$" required>
+        <input id="billDay" type="number" min="1" max="31" placeholder="Day" required>
+        <button class="btn primary" type="submit">+ Bill</button>
+      </form>
+      <button class="btn ghost small" id="suggestBudgetBtn" type="button" style="margin-top:10px">✨ Suggest budgets from last 3 months</button>
+    </div>
+    <div class="card" data-section="invest">
+      <div class="card-head"><div><h3>📈 Investments & net worth</h3><p>Stocks, 401(k), gold, property — one total.</p></div><button class="collapse-btn" data-collapse="invest" type="button">−</button></div>
+      <p><strong id="investTotal">$0</strong> <span class="muted">total invested</span> &nbsp;•&nbsp; <span id="investNetWorth" class="muted"></span></p>
+      <div id="investList" class="goal-list"></div>
+      <form id="investForm" class="goal-form">
+        <input id="investName" placeholder="e.g. S&P 500" maxlength="30" required>
+        <select id="investType"><option>Stocks</option><option>401(k)</option><option>Gold</option><option>Property</option><option>Other</option></select>
+        <input id="investValue" type="number" min="0" placeholder="Value $" required>
+        <button class="btn primary" type="submit">+ Add</button>
+      </form>
+      <h4 style="margin-top:16px">🏆 Challenges</h4>
+      <div id="challengeList" class="goal-list"></div>
+      <p class="muted small">Join a challenge — progress is based on this month's surplus.</p>
+      <button class="btn ghost" id="excelBtn" type="button">📊 Export Excel (CSV)</button>
+    </div>
+  </section>
+
   <!-- STATS -->
   <section class="stats">
     <div class="stat card"><span>Income <small>latest</small></span><strong id="statIncome" class="green-text">$0</strong><em id="statIncomeDelta">—</em></div>
@@ -266,6 +345,6 @@
 
   <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
-<script src="app.js?v=2026-11-26.11"></script>
+<script src="app.js?v=2026-11-26.12"></script>
 </body>
 </html>
