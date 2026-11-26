@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.16';
+const APP_VERSION = '2026-11-26.17';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -608,8 +608,16 @@ $('driveExpandBtn').onclick=()=>{ const p=prof(); if(p){ if(!p.uiCollapsed) p.ui
 $('menuBtn').onclick=()=>{ const el=$('topActions'); el.style.display = el.style.display==='none' ? 'contents' : 'none'; };
 document.querySelectorAll('[data-close-modal]').forEach(b=>b.onclick=()=>{ $(b.dataset.closeModal).hidden=true; });
 // Why / Household / Year in review
-$('whyBtn').onclick=()=>{ $('whyOverlay').hidden=false; };
-$('whyClose').onclick=()=>{ $('whyOverlay').hidden=true; };
+let whyTimer=null;
+function whyStartCountdown(){
+  clearInterval(whyTimer); let n=30;
+  const el=$('whyCountdown'); if(el) el.textContent='⏳ Closing in 30 secs…';
+  whyTimer=setInterval(()=>{ n--; if(el) el.textContent = n>0 ? `⏳ Closing in ${n} sec${n===1?'':'s'}…` : 'Closing…'; if(n<=0){ clearInterval(whyTimer); $('whyOverlay').hidden=true; } }, 1000);
+}
+function whyStopCountdown(){ clearInterval(whyTimer); }
+$('whyBtn').onclick=()=>{ $('whyOverlay').hidden=false; whyStartCountdown(); };
+$('whyClose').onclick=()=>{ whyStopCountdown(); $('whyOverlay').hidden=true; };
+$('whyTryBtn').onclick=()=>{ whyStopCountdown(); $('whyOverlay').hidden=true; welcomeOpen=true; render(); };
 $('whyTryBtn').onclick=()=>{ $('whyOverlay').hidden=true; welcomeOpen=true; render(); };
 $('householdBtn').onclick=()=>{
   const totals=state.profiles.map(p=>{
