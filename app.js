@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.22';
+const APP_VERSION = '2026-11-26.23';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -494,6 +494,7 @@ $('whyPageContinue').onclick=goToMainPage;
 $('welcomeStart').onclick=()=>{
   const name = $('welcomeName').value.trim();
   if(!name){ $('welcomeName').focus(); $('welcomeName').placeholder = 'Please enter your name to continue'; return; }
+  if(state.profiles.some(x=>x.name && x.name.toLowerCase()===name.toLowerCase()) && !confirm('A profile named "'+name+'" already exists. Create another one with the same name?')) return;
   // If there is one unnamed profile (migrated from the old single-profile
   // version), just name it instead of creating a duplicate.
   if(state.profiles.length===1 && !prof().name){ prof().name=name; }
@@ -558,7 +559,7 @@ setTimeout(async ()=>{
     const m = t.match(/APP_VERSION = '([^']+)'/);
     if(m && m[1] !== APP_VERSION){
       const b = document.createElement('div');
-      b.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#22c55e;color:#052e16;font-weight:700;border-radius:12px;padding:14px 16px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4);cursor:pointer';
+      b.style.cssText = 'position:fixed;left:12px;right:12px;top:12px;z-index:99;background:#22c55e;color:#052e16;font-weight:700;border-radius:12px;padding:14px 16px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4);cursor:pointer';
       b.textContent = 'New version ' + m[1] + ' is available — tap here to update';
       b.onclick = ()=>{ location.href = location.pathname + '?v=' + Date.now() + '&welcome=1'; };
       document.body.appendChild(b);
