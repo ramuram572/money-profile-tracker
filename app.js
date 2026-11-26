@@ -1,5 +1,5 @@
 // Money Profile — data stays in localStorage. No server, no tracking.
-const APP_VERSION = '2026-11-26.15';
+const APP_VERSION = '2026-11-26.16';
 const SCHEMA_VERSION = 2;
 const KEY = 'moneyProfileV1';
 const $ = id => document.getElementById(id);
@@ -586,7 +586,7 @@ $('pdfBtn').onclick=()=>window.print();
 
 // Expand all / Collapse all — on top, saves the state per profile like the
 // individual + / − buttons do, so it comes back the same next login.
-const ALL_SECTIONS = ['profile','drive','verdict','insights','goals','share','chart-income','chart-networth','chart-breakdown','chart-savings','form','history','quick','invest'];
+const ALL_SECTIONS = ['profile','drive','verdict','insights','goals','share','chart-income','chart-networth','chart-breakdown','chart-savings','form','history','quick','invest','why'];
 function setAllCollapsed(collapsed){
   const p=prof(); if(!p) return;
   if(!p.uiCollapsed) p.uiCollapsed={};

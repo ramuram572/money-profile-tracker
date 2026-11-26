@@ -182,3 +182,28 @@ header.topbar{position:static}
   .welcome-overlay{align-items:flex-end}
   .welcome-card{border-radius:20px 20px 0 0;max-width:100%;width:100%;margin:0}
 }
+
+/* v16 Lego welcome scene + Why card */
+.lego-scene{display:flex;justify-content:center;align-items:flex-end;gap:28px;height:120px;position:relative;margin-bottom:6px}
+.lego-fig{animation:bob 2.2s ease-in-out infinite}
+.lego-fig.girl{animation-delay:.5s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.lego-head{width:44px;height:38px;background:#fcd34d;border-radius:10px 10px 4px 4px;position:relative;margin:0 auto;border:2px solid #b45309}
+.lego-head::before{content:"";position:absolute;top:-8px;left:6px;right:6px;height:10px;background:#2563eb;border-radius:6px 6px 0 0}
+.girl-head{background:#fda4af;border-color:#be185d}
+.girl-head::before{background:#ec4899;height:14px;border-radius:10px 10px 0 0}
+.lego-eye{position:absolute;top:14px;width:6px;height:8px;background:#111;border-radius:50%}
+.lego-eye:first-child{left:10px}.lego-eye:nth-child(2){right:10px}
+.lego-smile{position:absolute;bottom:7px;left:14px;width:16px;height:7px;border-bottom:3px solid #111;border-radius:0 0 10px 10px}
+.lego-body{width:52px;height:44px;background:#2563eb;border-radius:8px;margin:2px auto 0;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid #1e40af}
+.girl-body{background:#ec4899;border-color:#be185d}
+.lego-legs{width:52px;height:16px;background:#111827;border-radius:0 0 8px 8px;margin:0 auto}
+.girl-legs{background:#7c3aed}
+.lego-brick{position:absolute;bottom:0;width:34px;height:18px;border-radius:4px;animation:floaty 3s ease-in-out infinite}
+.lego-brick.b1{left:8px;background:#ef4444}.lego-brick.b2{right:10px;background:#22c55e;animation-delay:.7s}.lego-brick.b3{right:52px;background:#f59e0b;animation-delay:1.2s}
+.lego-brick::before{content:"";position:absolute;top:-6px;left:6px;width:8px;height:6px;background:inherit;border-radius:3px 3px 0 0}
+.lego-coin{position:absolute;top:0;right:22%;font-size:26px;animation:floaty 2.5s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-12px) rotate(6deg)}}
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:640px){.why-grid{grid-template-columns:1fr}}
+.why-card{border:2px solid #bbf7d0}

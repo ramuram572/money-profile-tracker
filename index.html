@@ -15,12 +15,18 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link rel="stylesheet" href="styles.css?v=2026-11-26.15" />
+<link rel="stylesheet" href="styles.css?v=2026-11-26.16" />
 </head>
 <body>
 <!-- WELCOME / ONBOARDING -->
 <div class="welcome-overlay" id="welcomeOverlay" hidden>
   <div class="welcome-card">
+    <div class="lego-scene" aria-hidden="true">
+      <div class="lego-fig boy"><div class="lego-head"><span class="lego-eye"></span><span class="lego-eye"></span><span class="lego-smile"></span></div><div class="lego-body">💰</div><div class="lego-legs"></div></div>
+      <div class="lego-fig girl"><div class="lego-head girl-head"><span class="lego-eye"></span><span class="lego-eye"></span><span class="lego-smile"></span></div><div class="lego-body girl-body">📈</div><div class="lego-legs girl-legs"></div></div>
+      <div class="lego-brick b1"></div><div class="lego-brick b2"></div><div class="lego-brick b3"></div>
+      <div class="lego-coin">💵</div>
+    </div>
     <div class="welcome-graphic" aria-hidden="true">
       <div class="coin c1">$</div><div class="coin c2">₹</div><div class="coin c3">€</div>
       <svg viewBox="0 0 320 120" class="welcome-chart"><polyline points="10,95 70,70 130,80 190,45 250,55 310,15" fill="none" stroke="#22c55e" stroke-width="5" stroke-linecap="round"/><circle cx="310" cy="15" r="7" fill="#22c55e"/><circle cx="190" cy="45" r="5" fill="#6366f1"/><rect x="20" y="80" width="28" height="30" rx="6" fill="#6366f1"/><rect x="70" y="60" width="28" height="50" rx="6" fill="#22c55e"/><rect x="120" y="70" width="28" height="40" rx="6" fill="#6366f1"/><rect x="170" y="40" width="28" height="70" rx="6" fill="#22c55e"/><rect x="220" y="50" width="28" height="60" rx="6" fill="#6366f1"/></svg>
@@ -116,6 +122,18 @@
 </header>
 
 <main class="wrap">
+  <!-- WHY THIS APP — on the main page -->
+  <section class="card why-card" data-section="why">
+    <div class="card-head"><div><h3>✨ Why Money Profile?</h3><p>One entry a month. Your money, in plain English.</p></div><button class="collapse-btn" data-collapse="why" type="button">−</button></div>
+    <div class="why-grid">
+      <div>✅ <strong>One entry a month</strong><br><span class="muted small">No daily tracking, no burnout.</span></div>
+      <div>💬 <strong>Plain English</strong><br><span class="muted small">"You kept $1,200 — your best yet."</span></div>
+      <div>🔒 <strong>Private by design</strong><br><span class="muted small">No account, no ads, your data stays yours.</span></div>
+      <div>📱 <strong>Any device</strong><br><span class="muted small">Connect Drive, Load, and your history is there.</span></div>
+      <div>👨‍👩‍👧 <strong>For the whole family</strong><br><span class="muted small">Each person gets their own profile.</span></div>
+      <div>🎉 <strong>Saving feels good</strong><br><span class="muted small">Confetti, streaks, badges and goals.</span></div>
+    </div>
+  </section>
   <!-- PROFILE -->
   <section class="card profile-card" data-section="profile">
     <button class="collapse-btn" data-collapse="profile" type="button" title="Minimise / expand profile">−</button>
@@ -348,6 +366,6 @@
 
   <footer class="muted small center">Money Profile • <span id="footerVersion"></span> • Your numbers never leave this browser unless you export them. • Open <code>index.html</code> to use it, or host it free with GitHub Pages.</footer>
 </main>
-<script src="app.js?v=2026-11-26.15"></script>
+<script src="app.js?v=2026-11-26.16"></script>
 </body>
 </html>
